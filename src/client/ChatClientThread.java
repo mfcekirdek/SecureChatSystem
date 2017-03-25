@@ -11,11 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
-
-
-
-
-
 //  Swing
 import javax.swing.JTextArea;
 

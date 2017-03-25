@@ -2,20 +2,9 @@
 package server;
 
 // Java
-import java.util.*;
-import java.math.BigInteger;
-
 // socket
-import java.net.*;
-import java.io.*;
-
+import java.net.Socket;
 // Crypto
-import java.security.*;
-import java.security.spec.*;
-import java.security.interfaces.*;
-import javax.crypto.*;
-import javax.crypto.spec.*;
-import javax.crypto.interfaces.*;
 
 // You may need to expand this class for anonymity and revocation control.
 public class ClientRecord {
