@@ -147,7 +147,8 @@ public class ChatClient {
             String keyStoreName, char[] keyStorePassword,
             String caHost, int caPort,
             String serverHost, int serverPort) {
-
+            
+            System.out.println("Loginname : " + loginName+ " password : "+String.valueOf(password)+ " keyStoreName : "+keyStoreName+" keyStorePassword : "+String.valueOf(keyStorePassword)+" caHost : "+caHost+" caPort : "+caPort+" serverHost :"+serverHost+" serverPort : "+serverPort);
         try {
 
             _loginName = loginName;
