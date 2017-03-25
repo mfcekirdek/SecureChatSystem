@@ -7,6 +7,7 @@
 //  Chat Client starter application.
 package client;
 
+
 //  AWT/Swing
 import java.awt.CardLayout;
 import java.awt.event.WindowAdapter;
@@ -28,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
 import server.ChatServer;
+import util.SymmetricKeyUtil;
 
 public class ChatClient {
 
@@ -52,6 +54,12 @@ public class ChatClient {
 //    KeyManagerFactory keyManagerFactory;
 //    TrustManagerFactory trustManagerFactory;
   
+    
+    
+    private String key = "Bar12345Bar12345"; // 128 bit key
+    private String initVector = "XandomInitVector"; // 16 bytes IV
+    private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
+    
     //  ChatClient Constructor
     //
     //  empty, as you can see.
@@ -199,10 +207,11 @@ public class ChatClient {
     public void sendMessage(String msg) {
 
         try {
-
+            
             msg = _loginName + "> " + msg;
-
-            _out.println(msg);
+            String encryptedMsg = SymmetricKeyUtil.encrypt(key, initVector, msg);
+            String hmac = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
+            _out.println(encryptedMsg+hmac);
 
         } catch (Exception e) {
 

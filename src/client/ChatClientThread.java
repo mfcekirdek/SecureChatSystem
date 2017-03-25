@@ -11,8 +11,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+
+
+
+
+
 //  Swing
 import javax.swing.JTextArea;
+
+import util.SymmetricKeyUtil;
 //  Crypto
 
 public class ChatClientThread extends Thread {
@@ -20,6 +27,10 @@ public class ChatClientThread extends Thread {
     private ChatClient _client;
     private JTextArea _outputArea;
     private Socket _socket = null;
+    
+    private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
+    private String key = "Bar12345Bar12345"; // 128 bit key
+    private String initVector = "XandomInitVector"; // 16 bytes IV
 
     public ChatClientThread(ChatClient client) {
 
@@ -32,7 +43,7 @@ public class ChatClientThread extends Thread {
     public void run() {
 
         try {
-
+            
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                     _socket.getInputStream()));
@@ -41,7 +52,7 @@ public class ChatClientThread extends Thread {
 
             while ((msg = in.readLine()) != null) {
 
-                consumeMessage(msg + " \n");
+                consumeMessage(msg);
             }
 
             _socket.close();
@@ -55,9 +66,16 @@ public class ChatClientThread extends Thread {
 
     public void consumeMessage(String msg) {
 
-
         if (msg != null) {
-            _outputArea.append(msg);
+          
+             String hmac = msg.substring(msg.length()-24);
+             String encryptedMsg = msg.substring(0,msg.length()-24);
+             String calculatedHMAC = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
+             String decryptedMsg = SymmetricKeyUtil.decrypt(key, initVector, encryptedMsg);
+
+             if(hmac.equals(calculatedHMAC)) { // Authenticated
+               _outputArea.append(decryptedMsg);
+             }
         }
 
     }
