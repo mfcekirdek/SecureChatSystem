@@ -1,2 +1,4 @@
 keytool -genkeypair -alias mykey -storepass s3cr3t -keypass s3cr3t -keyalg RSA -keystore keystore.jks
 
+keytool -genkeypair -alias serverKey -storepass s3rv3rstor3s3cr3t -keypass s3rv3rk3ys3cr3t -keyalg RSA -keystore serverkeystore.jks
+keytool -genkeypair -alias MFC -storepass cli3ntstor3s3cr3t -keypass cli3ntk3ys3cr3t -keyalg RSA -keystore clientkeystore.jks

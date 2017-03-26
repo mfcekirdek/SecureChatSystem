@@ -2,12 +2,18 @@ package util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -51,22 +57,32 @@ public class PublicKeyUtil {
    * keystore.jks
    */
 
-  public static KeyPair getKeyPairFromKeyStore() throws Exception {
-    InputStream ins = new FileInputStream(new File("certs/keystore.jks"));
+  public static KeyPair getKeyPairFromKeyStore(String fileName, String alias, char[] keyStorePw,
+      char[] keyPw) throws NoSuchAlgorithmException, CertificateException, IOException,
+      UnrecoverableEntryException, KeyStoreException {
+    
+    InputStream ins;
+    ins = new FileInputStream(new File("certs/" + fileName));
 
     KeyStore keyStore = KeyStore.getInstance("JCEKS");
-    keyStore.load(ins, "s3cr3t".toCharArray()); // Keystore password
+    keyStore.load(ins, keyStorePw); // Keystore password
     KeyStore.PasswordProtection keyPassword = // Key password
-        new KeyStore.PasswordProtection("s3cr3t".toCharArray());
+        new KeyStore.PasswordProtection(keyPw);
 
     KeyStore.PrivateKeyEntry privateKeyEntry =
-        (KeyStore.PrivateKeyEntry) keyStore.getEntry("mykey", keyPassword);
+        (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias, keyPassword);
 
-    java.security.cert.Certificate cert = keyStore.getCertificate("mykey");
+    java.security.cert.Certificate cert = keyStore.getCertificate(alias);
+    
+    if(cert == null)
+      return null;
+    
     PublicKey publicKey = cert.getPublicKey();
     PrivateKey privateKey = privateKeyEntry.getPrivateKey();
 
     return new KeyPair(publicKey, privateKey);
+
+
   }
 
 
@@ -95,7 +111,12 @@ public class PublicKeyUtil {
 
   public static void main(String[] args) throws Exception {
     // First generate a public/private key pair
-    KeyPair pair = getKeyPairFromKeyStore();
+
+    char[] s1 = "s3cr3t".toCharArray();
+    char[] s2 = "s3cr3t".toCharArray();
+    String fileName = "keystore.jks";
+
+    KeyPair pair = getKeyPairFromKeyStore(fileName, "mykey", s1, s2);
     System.err.println("PUBLIC KEY : " + pair.getPublic());
     System.err.println("PRIVATE KEY : " + pair.getPrivate());
 

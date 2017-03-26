@@ -9,6 +9,13 @@ package authserver;
 import java.awt.CardLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -16,14 +23,20 @@ import javax.swing.JTextArea;
 // socket
 //  Crypto
 
+
+
+
+import util.PublicKeyUtil;
+
 public class AuthServer {
     
     //  Failure codes
     public static final int SUCCESS = 0;
     public static final int KEYSTORE_FILE_NOT_FOUND = 1;
 //    public static final int PERMISSIONS_FILE_NOT_FOUND = 2;
-//    public static final int PERMISSIONS_FILE_TAMPERED = 3;
+    public static final int PERMISSIONS_FILE_TAMPERED = 3;
     public static final int ERROR = 4;
+    
     //  The GUI
     AuthServerLoginPanel _panel;
     AuthServerActivityPanel _activityPanel;
@@ -32,7 +45,13 @@ public class AuthServer {
     AuthServerThread _thread;
     //  Port number to listen on
     private int _portNum;
+    
+    private static char [] KEY_STORE_PASSWORD;
+    private static String keyStoreFilename;
 
+    private static final char [] KEY_PASSWORD = "s3rv3rk3ys3cr3t".toCharArray();
+    private static final String ALIAS = "serverKey"; //"serverKey";
+    
     //  Data structures to hold the authentication
     //  information read from the file
     //  ............
@@ -103,11 +122,51 @@ public class AuthServer {
     //
     public int startup(String _ksFileName, char[] _privateKeyPass, int _asPort) {
         _portNum = _asPort;
-
+        KEY_STORE_PASSWORD = _privateKeyPass;
+        keyStoreFilename = _ksFileName;
+        int result = AuthServer.KEYSTORE_FILE_NOT_FOUND;
+        
+        
+        
         //
         //  Read the AS keystore (i.e. its private key)
         //  Failure codes to return are defined on the top
         //
+        
+        KeyPair kp;
+        
+        try {
+          kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreFilename,AuthServer.ALIAS,KEY_STORE_PASSWORD,AuthServer.KEY_PASSWORD);
+          if(kp != null) {
+              System.out.println(kp.getPublic().toString());
+              System.out.println(kp.getPrivate().toString());
+              result = AuthServer.SUCCESS;
+              
+              _layout.show(_appFrame.getContentPane(), "ActivityPanel");
+              _thread = new AuthServerThread(this);
+              _thread.start();
+          }
+          
+          else 
+            result = AuthServer.ERROR;
+          
+        } catch (NoSuchAlgorithmException e) {
+          result = AuthServer.ERROR;
+        } catch (CertificateException e) {
+          result = AuthServer.ERROR;
+        } catch (UnrecoverableEntryException e) {
+          result = AuthServer.ERROR;
+        } catch (KeyStoreException e) {
+           result = AuthServer.ERROR;
+        } catch (IOException e) {
+          System.out.println(e);
+          result = AuthServer.PERMISSIONS_FILE_TAMPERED;
+          if(e instanceof FileNotFoundException) {
+              result = AuthServer.KEYSTORE_FILE_NOT_FOUND;
+              System.out.println("LOL");
+          }
+        }
+        
 
         //
         //  Note :
@@ -116,11 +175,7 @@ public class AuthServer {
         //    thread listening for connections
         //
 
-        _layout.show(_appFrame.getContentPane(), "ActivityPanel");
-
-        _thread = new AuthServerThread(this);
-        _thread.start();
-        return AuthServer.SUCCESS;
+        return result;
     }
 
     public int getPortNumber() {

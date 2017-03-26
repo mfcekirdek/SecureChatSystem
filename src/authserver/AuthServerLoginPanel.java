@@ -154,6 +154,9 @@ public class AuthServerLoginPanel extends JPanel {
                 //  Nothing happens, this panel is now hidden
                 _errorLabel.setText(" ");
                 break;
+            case AuthServer.PERMISSIONS_FILE_TAMPERED:
+                _errorLabel.setText("Keystore was tampered with, or password was incorrect");
+                break;
             case AuthServer.KEYSTORE_FILE_NOT_FOUND:
                 _errorLabel.setText("KeyStore file not found!");
                 break;

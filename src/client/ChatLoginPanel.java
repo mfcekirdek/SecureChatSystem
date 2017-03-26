@@ -93,10 +93,10 @@ public class ChatLoginPanel extends JPanel {
 
         // just for testing purpose
 
-        _loginNameField.setText("cs470");
-        _passwordField.setText("123456");
-        _keyStoreNameField.setText("client1");
-        _keyStorePasswordField.setText("123456");
+        _loginNameField.setText("MFC");
+        _passwordField.setText("cli3ntk3ys3cr3t");
+        _keyStoreNameField.setText("clientkeystore.jks");
+        _keyStorePasswordField.setText("cli3ntstor3s3cr3t");
         _caHostField.setText("localhost");
         _caPortField.setText("6666");
         _serverHostField.setText("localhost");

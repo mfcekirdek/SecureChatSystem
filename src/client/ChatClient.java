@@ -13,6 +13,7 @@ import java.awt.CardLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 //  Java
@@ -21,14 +22,22 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.AccessControlException;
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 //  Crypto
 import java.security.SecureRandom;
+import java.security.UnrecoverableEntryException;
+import java.security.cert.CertificateException;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
+import authserver.AuthServer;
+import authserver.AuthServerThread;
 import server.ChatServer;
+import util.PublicKeyUtil;
 import util.SymmetricKeyUtil;
 
 public class ChatClient {
@@ -149,9 +158,7 @@ public class ChatClient {
             String serverHost, int serverPort) {
             
             System.out.println("Loginname : " + loginName+ " password : "+String.valueOf(password)+ " keyStoreName : "+keyStoreName+" keyStorePassword : "+String.valueOf(keyStorePassword)+" caHost : "+caHost+" caPort : "+caPort+" serverHost :"+serverHost+" serverPort : "+serverPort);
-        try {
-
-            _loginName = loginName;
+      
 
 
             //
@@ -161,43 +168,79 @@ public class ChatClient {
             //  Send public key and get back certificate
             //  Use certificate to establish secure connection with server
             //
+            
+            
+            int result = ERROR;
+            
+            KeyPair kp;
+            
+            try {
+              kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName,loginName,keyStorePassword,password);
+              if(kp != null) {
+                  System.out.println(kp.getPublic().toString());
+                  System.out.println(kp.getPrivate().toString());
+                  result = SUCCESS;
+                  
+                  try {
+                    _loginName = loginName;
+                    
+                    _socket = new Socket(serverHost, serverPort);
+                    _out = new PrintWriter(_socket.getOutputStream(), true);
 
-            _socket = new Socket(serverHost, serverPort);
-            _out = new PrintWriter(_socket.getOutputStream(), true);
+                    _in = new BufferedReader(new InputStreamReader(
+                            _socket.getInputStream()));
 
-            _in = new BufferedReader(new InputStreamReader(
-                    _socket.getInputStream()));
+                    _layout.show(_appFrame.getContentPane(), "ChatRoom");
 
-            _layout.show(_appFrame.getContentPane(), "ChatRoom");
+                    _thread = new ChatClientThread(this);
+                    _thread.start();
+                    return result;
 
-            _thread = new ChatClientThread(this);
-            _thread.start();
-            return SUCCESS;
+                } catch (UnknownHostException e) {
 
-        } catch (UnknownHostException e) {
+                    System.err.println("Don't know about the serverHost: " + serverHost);
+                    System.exit(1);
 
-            System.err.println("Don't know about the serverHost: " + serverHost);
-            System.exit(1);
+                } catch (IOException e) {
 
-        } catch (IOException e) {
+                    System.err.println("Couldn't get I/O for "
+                            + "the connection to the serverHost: " + serverHost);
+                    System.out.println("ChatClient error: " + e.getMessage());
+                    e.printStackTrace();
 
-            System.err.println("Couldn't get I/O for "
-                    + "the connection to the serverHost: " + serverHost);
-            System.out.println("ChatClient error: " + e.getMessage());
-            e.printStackTrace();
+                    System.exit(1);
 
-            System.exit(1);
+                } catch (AccessControlException e) {
 
-        } catch (AccessControlException e) {
+                    return BAD_HOST;
 
-            return BAD_HOST;
+                } catch (Exception e) {
 
-        } catch (Exception e) {
+                    System.out.println("ChatClient err: " + e.getMessage());
+                    e.printStackTrace();
+                }
 
-            System.out.println("ChatClient err: " + e.getMessage());
-            e.printStackTrace();
-        }
-
+              }
+              
+              else 
+                result = ERROR;
+              
+            } catch (NoSuchAlgorithmException e) {
+              result = ERROR;
+            } catch (CertificateException e) {
+              result = ERROR;
+            } catch (UnrecoverableEntryException e) {
+              result = ERROR;
+            } catch (KeyStoreException e) {
+               result = ERROR;
+            } catch (IOException e) {
+              System.out.println(e);
+              result = ERROR;
+              if(e instanceof FileNotFoundException) {
+                  result = ERROR;
+                  System.out.println("LOL");
+              }
+            }
         return ERROR;
 
     }
