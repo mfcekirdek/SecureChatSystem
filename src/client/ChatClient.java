@@ -9,7 +9,10 @@ package client;
 
 
 //  AWT/Swing
+
 import java.awt.CardLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -50,6 +53,7 @@ public class ChatClient {
     ChatServer _server;
     ChatClientThread _thread;
     ChatLoginPanel _loginPanel;
+    ChatRoomSelectPanel _chatRoomSelectPanel;
     ChatRoomPanel _chatPanel;
     PrintWriter _out = null;
     BufferedReader _in = null;
@@ -62,13 +66,12 @@ public class ChatClient {
     KeyStore caKeyStore;
 //    KeyManagerFactory keyManagerFactory;
 //    TrustManagerFactory trustManagerFactory;
-  
-    
-    
+
+
     private String key = "Bar12345Bar12345"; // 128 bit key
     private String initVector = "XandomInitVector"; // 16 bytes IV
     private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
-    
+
     //  ChatClient Constructor
     //
     //  empty, as you can see.
@@ -98,7 +101,7 @@ public class ChatClient {
     //
     //  Construct the app inside a frame, in the center of the screen
     public static void main(String[] args) {
-        
+
         ChatClient app = new ChatClient();
 
         app.run();
@@ -114,12 +117,25 @@ public class ChatClient {
         _appFrame.getContentPane().setLayout(_layout);
         _loginPanel = new ChatLoginPanel(this);
         _chatPanel = new ChatRoomPanel(this);
+        _chatRoomSelectPanel = new ChatRoomSelectPanel();
         _appFrame.getContentPane().add(_loginPanel, "Login");
+        _appFrame.getContentPane().add(_chatRoomSelectPanel, "SelectChatRoom");
         _appFrame.getContentPane().add(_chatPanel, "ChatRoom");
         _appFrame.addWindowListener(new WindowAdapter() {
 
             public void windowClosing(WindowEvent e) {
                 quit();
+            }
+        });
+
+        _chatRoomSelectPanel._connectButton.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                String selectedRoom = (String) _chatRoomSelectPanel._chatRoomComboBox.getSelectedItem();
+                System.out.println("selectedRoom = " + selectedRoom);
+                _layout.show(_appFrame.getContentPane(), "ChatRoom");
+                _thread = new ChatClientThread(ChatClient.this);
+                _thread.start();
             }
         });
     }
@@ -131,7 +147,7 @@ public class ChatClient {
 
         try {
             _socket.shutdownOutput();
-            _thread.join();
+            //_thread.join();
             _socket.close();
 
         } catch (Exception err) {
@@ -153,47 +169,34 @@ public class ChatClient {
     //  The other is your authentication password on the CA.
     //
     public int connect(String loginName, char[] password,
-            String keyStoreName, char[] keyStorePassword,
-            String caHost, int caPort,
-            String serverHost, int serverPort) {
-            
-            System.out.println("Loginname : " + loginName+ " password : "+String.valueOf(password)+ " keyStoreName : "+keyStoreName+" keyStorePassword : "+String.valueOf(keyStorePassword)+" caHost : "+caHost+" caPort : "+caPort+" serverHost :"+serverHost+" serverPort : "+serverPort);
-      
+                       String keyStoreName, char[] keyStorePassword,
+                       String caHost, int caPort,
+                       String serverHost, int serverPort) {
 
+        System.out.println("Loginname : " + loginName + " password : " + String.valueOf(password) + " keyStoreName : " + keyStoreName + " keyStorePassword : " + String.valueOf(keyStorePassword) + " caHost : " + caHost + " caPort : " + caPort + " serverHost :" + serverHost + " serverPort : " + serverPort);
 
-            //
-            //  Read the client keystore
-            //         (for its private/public keys)
-            //  Establish secure connection to the CA
-            //  Send public key and get back certificate
-            //  Use certificate to establish secure connection with server
-            //
-            
-            
-            int result = ERROR;
-            
-            KeyPair kp;
-            
-            try {
-              kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName,loginName,keyStorePassword,password);
-              if(kp != null) {
-                  System.out.println(kp.getPublic().toString());
-                  System.out.println(kp.getPrivate().toString());
-                  result = SUCCESS;
-                  
-                  try {
+        int result = ERROR;
+
+        KeyPair kp;
+
+        try {
+            kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName, loginName, keyStorePassword, password);
+            if (kp != null) {
+                System.out.println(kp.getPublic().toString());
+                System.out.println(kp.getPrivate().toString());
+                result = SUCCESS;
+
+                try {
                     _loginName = loginName;
-                    
+
                     _socket = new Socket(serverHost, serverPort);
                     _out = new PrintWriter(_socket.getOutputStream(), true);
 
                     _in = new BufferedReader(new InputStreamReader(
                             _socket.getInputStream()));
 
-                    _layout.show(_appFrame.getContentPane(), "ChatRoom");
+                    _layout.show(_appFrame.getContentPane(), "SelectChatRoom");
 
-                    _thread = new ChatClientThread(this);
-                    _thread.start();
                     return result;
 
                 } catch (UnknownHostException e) {
@@ -220,29 +223,27 @@ public class ChatClient {
                     e.printStackTrace();
                 }
 
-              }
-              
-              else 
+            } else
                 result = ERROR;
-              
-            } catch (NoSuchAlgorithmException e) {
-              result = ERROR;
-            } catch (CertificateException e) {
-              result = ERROR;
-            } catch (UnrecoverableEntryException e) {
-              result = ERROR;
-            } catch (KeyStoreException e) {
-               result = ERROR;
-            } catch (IOException e) {
-              System.out.println(e);
-              result = ERROR;
-              if(e instanceof FileNotFoundException) {
-                  result = ERROR;
-                  System.out.println("LOL");
-              }
-            }
-        return ERROR;
 
+        } catch (NoSuchAlgorithmException e) {
+            result = ERROR;
+        } catch (CertificateException e) {
+            result = ERROR;
+        } catch (UnrecoverableEntryException e) {
+            result = ERROR;
+        } catch (KeyStoreException e) {
+            result = ERROR;
+        } catch (IOException e) {
+            System.out.println(e);
+            result = ERROR;
+            if (e instanceof FileNotFoundException) {
+                result = ERROR;
+                System.out.println("LOL");
+            }
+        }
+
+        return ERROR;
     }
 
     //  sendMessage
@@ -251,11 +252,11 @@ public class ChatClient {
     public void sendMessage(String msg) {
 
         try {
-            
+
             msg = _loginName + "> " + msg;
             String encryptedMsg = SymmetricKeyUtil.encrypt(key, initVector, msg);
             String hmac = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
-            _out.println(encryptedMsg+hmac);
+            _out.println(encryptedMsg + hmac);
 
         } catch (Exception e) {
 
