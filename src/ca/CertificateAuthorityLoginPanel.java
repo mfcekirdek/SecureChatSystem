@@ -1,41 +1,34 @@
 //
-//  AuthServerLoginPanel.java
+//  CertificateAuthorityPanel.java
 //
-//  GUI class for the Authentication Server Initialization.
+//  Written by : Priyank Patel <pkpatel@cs.stanford.edu>
 //
-package authserver;
+//  GUI class for the Certificate Authority Initialization.
+//
+package ca;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-
-public class AuthServerLoginPanel extends JPanel {
+public class CertificateAuthorityLoginPanel extends JPanel {
 
     JPasswordField _privateKeyPassField;
+  //  JPasswordField _permissionsFilePassField;
     JTextField _portField;
     JTextField _keystoreFileNameField;
+  //  JTextField _permissionsFileNameField;
     JLabel _errorLabel;
     JButton _startupButton;
-    AuthServer _as;
+    CertificateAuthority _ca;
 
-    public AuthServerLoginPanel(AuthServer as) {
-        _as = as;
+    public CertificateAuthorityLoginPanel(CertificateAuthority ca) {
+        _ca = ca;
 
         try {
             componentInit();
         } catch (Exception e) {
-            System.out.println("AuthServerPanel error: " + e.getMessage());
+            System.out.println("CertificateAuthorityPanel error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -47,9 +40,12 @@ public class AuthServerLoginPanel extends JPanel {
 
         setLayout(gridBag);
 
-        addLabel(gridBag, "Authentication Server Startup Panel", SwingConstants.CENTER, 1, 0, 2, 1);
+        addLabel(gridBag, "Certificate Server Startup Panel", SwingConstants.CENTER,
+                1, 0, 2, 1);
         addLabel(gridBag, "KeyStore File Name: ", SwingConstants.LEFT, 1, 1, 1, 1);
         addLabel(gridBag, "KeyStore (Private Key) Password: ", SwingConstants.LEFT, 1, 2, 1, 1);
+  //      addLabel(gridBag, "Permission File Name: ", SwingConstants.LEFT, 1, 3, 1, 1);
+  //      addLabel(gridBag, "Permission File Password: ", SwingConstants.LEFT, 1, 4, 1, 1);
         addLabel(gridBag, "Port Number: ", SwingConstants.LEFT, 1, 5, 1, 1);
 
 
@@ -59,11 +55,19 @@ public class AuthServerLoginPanel extends JPanel {
         _privateKeyPassField = new JPasswordField();
         _privateKeyPassField.setEchoChar('*');
         addField(gridBag, _privateKeyPassField, 2, 2, 1, 1);
-  
+
+  //      _permissionsFileNameField = new JTextField();
+  //      addField(gridBag, _permissionsFileNameField, 2, 3, 1, 1);
+
+  //      _permissionsFilePassField = new JPasswordField();
+  //      _permissionsFilePassField.setEchoChar('*');
+  //      addField(gridBag, _permissionsFilePassField, 2, 4, 1, 1);
+
         _portField = new JTextField();
         addField(gridBag, _portField, 2, 5, 1, 1);
 
-        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 6, 2, 1);
+        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER,
+                1, 6, 2, 1);
 
         // just for testing purposs
         _errorLabel.setForeground(Color.red);
@@ -76,6 +80,7 @@ public class AuthServerLoginPanel extends JPanel {
         add(_startupButton);
 
         _startupButton.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
                 startup();
             }
@@ -117,14 +122,18 @@ public class AuthServerLoginPanel extends JPanel {
     private void startup() {
         //System.out.println("Called startup");
 
-        int _asPort;
+        int _caPort;
 
         String _keystoreFileName = _keystoreFileNameField.getText();
+//        String _permissionsFileName = _permissionsFileNameField.getText();
         char[] _privateKeyPass = _privateKeyPassField.getPassword();
+     //   char[] _permissionsFilePass = _permissionsFilePassField.getPassword();
 
         if (_privateKeyPass.length == 0
+                /*|| _permissionsFilePass.length == 0*/
                 || _portField.getText().equals("")
-                || _keystoreFileName.equals("")) {
+                || _keystoreFileName.equals("")
+                /*|| _permissionsFileName.equals("")*/) {
 
             _errorLabel.setText("Missing required field.");
 
@@ -138,7 +147,7 @@ public class AuthServerLoginPanel extends JPanel {
 
         try {
 
-            _asPort = Integer.parseInt(_portField.getText());
+            _caPort = Integer.parseInt(_portField.getText());
 
         } catch (NumberFormatException nfExp) {
 
@@ -147,24 +156,35 @@ public class AuthServerLoginPanel extends JPanel {
             return;
         }
 
-        //System.out.println("Authentication server is starting up ...");
+        //System.out.println("Certificate Authority is starting up ...");
 
-        switch (_as.startup(_keystoreFileName, _privateKeyPass, _asPort)) {
-            case AuthServer.SUCCESS:
+        switch (_ca.startup(_keystoreFileName,
+                _privateKeyPass,
+               /* _permissionsFileName,
+                _permissionsFilePass,*/
+                _caPort)) {
+
+            case CertificateAuthority.SUCCESS:
                 //  Nothing happens, this panel is now hidden
                 _errorLabel.setText(" ");
                 break;
-            case AuthServer.WRONG_PASSWORD:
-                _errorLabel.setText("Keystore was tampered with, or password was incorrect");
-                break;
-            case AuthServer.KEYSTORE_FILE_NOT_FOUND:
+            case CertificateAuthority.KEYSTORE_FILE_NOT_FOUND:
                 _errorLabel.setText("KeyStore file not found!");
                 break;
-            case AuthServer.ERROR:
+            case CertificateAuthority.WRONG_PASSWORD:
+                _errorLabel.setText("Keystore was tampered with, or password was incorrect");
+                break;
+    /*        case CertificateAuthority.PERMISSIONS_FILE_NOT_FOUND:
+                _errorLabel.setText("Permissions file not found!");
+                break;
+            case CertificateAuthority.PERMISSIONS_FILE_TAMPERED:
+                _errorLabel.setText("Somebody messed up ther perms file!");
+                break;
+    */        case CertificateAuthority.ERROR:
                 _errorLabel.setText("Unknown Error!");
                 break;
         }
 
-        //System.out.println("Authentication Server startup complete");
+        //System.out.println("Certificate Authority startup complete");
     }
 }

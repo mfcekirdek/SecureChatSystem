@@ -34,8 +34,9 @@ public class AuthServer {
     public static final int SUCCESS = 0;
     public static final int KEYSTORE_FILE_NOT_FOUND = 1;
 //    public static final int PERMISSIONS_FILE_NOT_FOUND = 2;
-    public static final int PERMISSIONS_FILE_TAMPERED = 3;
+//    public static final int PERMISSIONS_FILE_TAMPERED = 3;
     public static final int ERROR = 4;
+    public static final int WRONG_PASSWORD = 5;
     
     //  The GUI
     AuthServerLoginPanel _panel;
@@ -160,7 +161,7 @@ public class AuthServer {
            result = AuthServer.ERROR;
         } catch (IOException e) {
           System.out.println(e);
-          result = AuthServer.PERMISSIONS_FILE_TAMPERED;
+          result = AuthServer.WRONG_PASSWORD;
           if(e instanceof FileNotFoundException) {
               result = AuthServer.KEYSTORE_FILE_NOT_FOUND;
               System.out.println("LOL");
