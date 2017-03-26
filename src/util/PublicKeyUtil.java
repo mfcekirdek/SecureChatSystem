@@ -1,5 +1,6 @@
 package util;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,6 +15,8 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -60,11 +63,11 @@ public class PublicKeyUtil {
   public static KeyPair getKeyPairFromKeyStore(String fileName, String alias, char[] keyStorePw,
       char[] keyPw) throws NoSuchAlgorithmException, CertificateException, IOException,
       UnrecoverableEntryException, KeyStoreException {
-    
-    InputStream ins;
-    ins = new FileInputStream(new File("certs/" + fileName));
 
-    KeyStore keyStore = KeyStore.getInstance("JCEKS");
+    InputStream ins;
+    ins = new FileInputStream(new File("448certs/" + fileName));
+
+    KeyStore keyStore = KeyStore.getInstance("JKS");
     keyStore.load(ins, keyStorePw); // Keystore password
     KeyStore.PasswordProtection keyPassword = // Key password
         new KeyStore.PasswordProtection(keyPw);
@@ -73,16 +76,14 @@ public class PublicKeyUtil {
         (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias, keyPassword);
 
     java.security.cert.Certificate cert = keyStore.getCertificate(alias);
-    
-    if(cert == null)
+
+    if (cert == null)
       return null;
-    
+
     PublicKey publicKey = cert.getPublicKey();
     PrivateKey privateKey = privateKeyEntry.getPrivateKey();
 
     return new KeyPair(publicKey, privateKey);
-
-
   }
 
 
@@ -112,31 +113,55 @@ public class PublicKeyUtil {
   public static void main(String[] args) throws Exception {
     // First generate a public/private key pair
 
-    char[] s1 = "s3cr3t".toCharArray();
-    char[] s2 = "s3cr3t".toCharArray();
-    String fileName = "keystore.jks";
+    // char[] s1 = "s3rv3rstor3s3cr3t".toCharArray();
+    // char[] s2 = "s3rv3rk3ys3cr3t".toCharArray();
+    // String fileName = "serverkeystore.jks";
+    //
+    // KeyPair pair = getKeyPairFromKeyStore(fileName, "serverKey", s1, s2);
+    // System.err.println("PUBLIC KEY : " + pair.getPublic());
+    // System.err.println("PRIVATE KEY : " + pair.getPrivate());
+    //
+    // // Our secret message
+    // String message = "the answer to life the universe and everything";
+    //
+    // // Encrypt the message
+    // String cipherText = encrypt(message, pair.getPublic());
+    //
+    // // Now decrypt it
+    // String decipheredMessage = decrypt(cipherText, pair.getPrivate());
+    //
+    // System.out.println(decipheredMessage);
+    //
+    //
+    // String signature = sign("foobar", pair.getPrivate());
+    //
+    // // Let's check the signature
+    // boolean isCorrect = verify("foobar", signature, pair.getPublic());
+    // System.out.println("Signature correct: " + isCorrect);
 
-    KeyPair pair = getKeyPairFromKeyStore(fileName, "mykey", s1, s2);
-    System.err.println("PUBLIC KEY : " + pair.getPublic());
-    System.err.println("PRIVATE KEY : " + pair.getPrivate());
-
-    // Our secret message
-    String message = "the answer to life the universe and everything";
-
-    // Encrypt the message
-    String cipherText = encrypt(message, pair.getPublic());
-
-    // Now decrypt it
-    String decipheredMessage = decrypt(cipherText, pair.getPrivate());
-
-    System.out.println(decipheredMessage);
+    getCertFromFile("ca.cer");
+  }
 
 
-    String signature = sign("foobar", pair.getPrivate());
+  public static X509Certificate getCertFromFile (String cert) {
+    FileInputStream fis;
+    X509Certificate caCert = null;
+    try {
+      fis = new FileInputStream("448certs/" + cert);
+      BufferedInputStream bis = new BufferedInputStream(fis);
 
-    // Let's check the signature
-    boolean isCorrect = verify("foobar", signature, pair.getPublic());
-    System.out.println("Signature correct: " + isCorrect);
+      CertificateFactory cf = CertificateFactory.getInstance("X.509");
+      caCert = (X509Certificate) cf.generateCertificate(bis);
+
+      System.out.println(caCert.getPublicKey());
+
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (CertificateException e) {
+      e.printStackTrace();
+    }
+
+    return caCert;
   }
 
 }

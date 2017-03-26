@@ -50,8 +50,8 @@ public class AuthServer {
     private static char [] KEY_STORE_PASSWORD;
     private static String keyStoreFilename;
 
-    private static final char [] KEY_PASSWORD = "s3rv3rk3ys3cr3t".toCharArray();
-    private static final String ALIAS = "serverKey"; //"serverKey";
+    private static final char [] KEY_PASSWORD = "s3rv3r1k3y".toCharArray();
+    private static final String ALIAS = "Server1"; //"serverKey";
     
     //  Data structures to hold the authentication
     //  information read from the file
