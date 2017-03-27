@@ -35,10 +35,13 @@ import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
+
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 import server.ChatServer;
 import util.DH;
@@ -65,18 +68,23 @@ public class ChatClient {
   SecureRandom secureRandom;
   KeyStore clientKeyStore;
   KeyStore caKeyStore;
+  
+
+  
   // KeyManagerFactory keyManagerFactory;
   // TrustManagerFactory trustManagerFactory;
 
 
-  private String key = "Bar12345Bar12345"; // 128 bit key
-  private String initVector = "XandomInitVector"; // 16 bytes IV
+  private String symmetricAESkey; // 128 bit key
+  private byte [] initVector; // 16 bytes IV
   private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
+  
   private X509Certificate clientCert;
   private static int selectedRoomNumber = 1;
   private HashMap<String, BigInteger> dhParameters;
   private HashMap<String, BigInteger> serverDhParameters;
   private BigInteger sharedKey;
+  private KeyPair kp;
 
 
   // ChatClient Constructor
@@ -175,11 +183,9 @@ public class ChatClient {
         + roomNumber);
 
     int result = ERROR;
-    KeyPair kp;
 
     try {
-      kp =
-          PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName, loginName, keyStorePassword, password);
+      kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName, loginName, keyStorePassword, password);
       if (kp != null) {
         System.out.println(kp.getPublic().toString());
         System.out.println(kp.getPrivate().toString());
@@ -228,19 +234,49 @@ public class ChatClient {
             }
           }
 
-          serverDhParameters = (HashMap<String, BigInteger>) ois.readObject();
+          HashMap<String,String> tmp = (HashMap<String, String>) ois.readObject();
+          serverDhParameters = new HashMap<String, BigInteger>();
+          BigInteger decryptedServerDHPublic = new BigInteger(PublicKeyUtil.decrypt(tmp.get("public"), kp.getPrivate()));
+          BigInteger decryptedServerDHGeneratorValue = new BigInteger(PublicKeyUtil.decrypt(tmp.get("generatorValue"), kp.getPrivate()));
+          BigInteger decryptedServerDHPrimeValue = new BigInteger(PublicKeyUtil.decrypt(tmp.get("primeValue"), kp.getPrivate()));
+          serverDhParameters.put("public",decryptedServerDHPublic);
+          serverDhParameters.put("generatorValue",decryptedServerDHGeneratorValue);
+          serverDhParameters.put("primeValue",decryptedServerDHPrimeValue);
           System.out.println("CLIENT : " + serverDhParameters);
-          // TODO decrypt edilecek..
 
           
           //TODO  encrypt edilecek..
           dhParameters = DH.getDHParameters(serverDhParameters.get("generatorValue"),serverDhParameters.get("primeValue"));
-          HashMap<String,BigInteger> dhParametersToSend = (HashMap<String, BigInteger>) dhParameters.clone();
-          dhParametersToSend.remove("secret");
+          HashMap<String,String> dhParametersToSend = new HashMap<String, String>();
+          String encryptedClientDHPublic = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("public")), serverCert.getPublicKey());
+          String encryptedClientDHGeneratorValue = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("generatorValue")), serverCert.getPublicKey());
+          String encryptedClientDHPrimeValue = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("primeValue")), serverCert.getPublicKey());
+          dhParametersToSend.put("public", encryptedClientDHPublic);
+          dhParametersToSend.put("generatorValue", encryptedClientDHGeneratorValue);
+          dhParametersToSend.put("primeValue", encryptedClientDHPrimeValue);
           oos.writeObject(dhParametersToSend);
           
           sharedKey = DH.getSharedKey(serverDhParameters.get("public"), dhParameters.get("secret"), dhParameters.get("primeValue"));
           System.err.println(sharedKey);
+          
+          // aynı
+          
+          byte[] hashOfSharedKey = SymmetricKeyUtil.generateMD5Hash(String.valueOf(sharedKey)).getBytes();
+          // System.out.println("hashOfSharedKey : " + Base64.encode(hashOfSharedKey));
+          hashOfSharedKey = Arrays.copyOf(hashOfSharedKey, 16);
+          // System.out.println("hashOfSharedKey 16: " + hashOfSharedKey.length);
+          // aynı
+          String encryptedChatRoomKey;
+          byte [] zeroIV = "0000000000000000".getBytes();
+
+          if ((encryptedChatRoomKey = _in.readLine()) != null) {
+            // System.out.println("Alinan: " + encryptedChatRoomKey);
+            String decryptedChatRoomKey = SymmetricKeyUtil.decrypt(hashOfSharedKey, zeroIV, encryptedChatRoomKey.getBytes());
+            System.out.println("Decrypted: " + decryptedChatRoomKey);
+            symmetricAESkey = decryptedChatRoomKey;
+            System.out.println("Symmetric AES key: " + symmetricAESkey);
+          }          
+          
 
           _layout.show(_appFrame.getContentPane(), "ChatRoom");
           _thread = new ChatClientThread(ChatClient.this);
@@ -301,11 +337,19 @@ public class ChatClient {
   public void sendMessage(String msg) {
 
     try {
-
       msg = _loginName + "> " + msg;
-      String encryptedMsg = SymmetricKeyUtil.encrypt(key, initVector, msg);
+      initVector = SymmetricKeyUtil.generate16bitIV();
+      
+      System.out.println("SENDMSG " + initVector +" ve " + symmetricAESkey + " ve " + symmetricAESkey.length()); 
+      
+      
+      String encryptedMsg = SymmetricKeyUtil.encrypt(symmetricAESkey.getBytes(), initVector, msg.getBytes());
+
+      
+//      System.out.println("SENDMSG: "+encryptedMsg + new String(initVector)  + hmac);
+      
       String hmac = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
-      _out.println(encryptedMsg + hmac);
+      _out.println(encryptedMsg + new String(initVector)  + hmac);
 
     } catch (Exception e) {
 
@@ -324,4 +368,21 @@ public class ChatClient {
 
     return _chatPanel.getOutputArea();
   }
+  
+  public String getSymmetricAESkey() {
+    return symmetricAESkey;
+  }
+
+  public void setSymmetricAESkey(String symmetricAESkey) {
+    this.symmetricAESkey = symmetricAESkey;
+  }
+
+  public byte[] getInitVector() {
+    return initVector;
+  }
+
+  public void setInitVector(byte[] initVector) {
+    this.initVector = initVector;
+  }
+
 }

@@ -153,7 +153,7 @@ public class PublicKeyUtil {
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       caCert = (X509Certificate) cf.generateCertificate(bis);
 
-      System.out.println(caCert.getPublicKey());
+//      System.out.println(caCert.getPublicKey());
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();

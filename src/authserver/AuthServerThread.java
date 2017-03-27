@@ -17,16 +17,13 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
-
-
 
 // Swing
 import javax.swing.JTextArea;
 //  Crypto
-
-
 
 import util.DH;
 import util.PublicKeyUtil;
@@ -102,13 +99,31 @@ public class AuthServerThread extends Thread {
                         
                 // TODO encrypt edilecek..
                 dhParameters = DH.getDHParameters();
-                HashMap<String,BigInteger> dhParametersToSend = (HashMap<String, BigInteger>) dhParameters.clone();
-                dhParametersToSend.remove("secret");
+                HashMap<String,String> dhParametersToSend = new HashMap<String, String>();
+
+                String encryptedServerDHPublic = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("public")), clientCert.getPublicKey());
+                String encryptedServerDHGeneratorValue = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("generatorValue")), clientCert.getPublicKey());
+                String encryptedServerDHPrimeValue = PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("primeValue")), clientCert.getPublicKey());
+
+                dhParametersToSend.put("public", encryptedServerDHPublic);
+                dhParametersToSend.put("generatorValue", encryptedServerDHGeneratorValue);
+                dhParametersToSend.put("primeValue", encryptedServerDHPrimeValue);
                 oos.writeObject(dhParametersToSend);
                 
                 
                 // TODO decrypt edilecek..
-                clientDhParameters = (HashMap<String, BigInteger>) ois.readObject();
+                HashMap<String,String> tmp = (HashMap<String, String>) ois.readObject();
+                clientDhParameters = new HashMap<String, BigInteger>();
+                
+                KeyPair kp = _as.getKeyPair();
+
+                BigInteger decryptedClientDHPublic = new BigInteger(PublicKeyUtil.decrypt(tmp.get("public"), kp.getPrivate()));
+                BigInteger decryptedClientDHGeneratorValue = new BigInteger(PublicKeyUtil.decrypt(tmp.get("generatorValue"), kp.getPrivate()));
+                BigInteger decryptedClientDHPrimeValue = new BigInteger(PublicKeyUtil.decrypt(tmp.get("primeValue"), kp.getPrivate()));
+                
+                clientDhParameters.put("public",decryptedClientDHPublic);
+                clientDhParameters.put("generatorValue",decryptedClientDHGeneratorValue);
+                clientDhParameters.put("primeValue",decryptedClientDHPrimeValue);     
                 System.out.println("SERVER : " + clientDhParameters);
                
                 sharedKey = DH.getSharedKey(clientDhParameters.get("public"), dhParameters.get("secret"), dhParameters.get("primeValue"));
