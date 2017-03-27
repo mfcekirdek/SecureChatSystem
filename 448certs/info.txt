@@ -1,0 +1,19 @@
+cakeystore.jks:
+	alias: CA
+	pwd: cak3ystor3
+	keypair pwd: cak3y
+	
+mfckeystore.jks:
+	alias: MFC
+	pwd: mfck3ystor3
+	keypair pwd: mfck3y
+
+server1keystore.jks:
+	alias: Server1
+	pwd: s3rv3r1
+	keypair pwd: s3rv3r1k3y
+	
+server2keystore.jks:
+	alias: Server2
+	pwd: s3rv3r2
+	keypair pwd: s3rv3r2k3y

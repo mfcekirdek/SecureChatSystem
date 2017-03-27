@@ -52,7 +52,6 @@ public class AuthServerLoginPanel extends JPanel {
         addLabel(gridBag, "KeyStore (Private Key) Password: ", SwingConstants.LEFT, 1, 2, 1, 1);
         addLabel(gridBag, "Port Number: ", SwingConstants.LEFT, 1, 5, 1, 1);
 
-
         _keystoreFileNameField = new JTextField();
         addField(gridBag, _keystoreFileNameField, 2, 1, 1, 1);
 
@@ -67,6 +66,10 @@ public class AuthServerLoginPanel extends JPanel {
 
         // just for testing purposs
         _errorLabel.setForeground(Color.red);
+        
+        _keystoreFileNameField.setText("server1keystore.jks");
+        _privateKeyPassField.setText("s3rv3r1");
+        _portField.setText("7777");
 
         _startupButton = new JButton("Startup");
         c.gridx = 1;

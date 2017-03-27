@@ -1,7 +1,5 @@
 package server;
 
-import authserver.AuthServer;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,10 +14,10 @@ public class ChatServerLoginPanel extends JPanel {
     JTextField _keystoreFileNameBField;
     JLabel _errorLabel;
     JButton _startupButton;
-    ChatServer _as;
+    ChatServer _cs;
 
-    public ChatServerLoginPanel(ChatServer as) {
-        _as = as;
+    public ChatServerLoginPanel(ChatServer cs) {
+      _cs = cs;
 
         try {
             componentInit();
@@ -74,7 +72,13 @@ public class ChatServerLoginPanel extends JPanel {
         c.insets = new Insets(10, 10,20, 10);
         gridBag.setConstraints(_startupButton, c);
         add(_startupButton);
-
+        
+        _keystoreFileNameAField.setText("server1keystore.jks");
+        _keystoreFileNameBField.setText("server2keystore.jks");
+        _privateKeyPassAField.setText("s3rv3r1");
+        _privateKeyPassBField.setText("s3rv3r2");
+        _portField.setText("7777");
+        
         _startupButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 startup();
@@ -148,12 +152,14 @@ public class ChatServerLoginPanel extends JPanel {
 
             return;
         }
-
-        int[] status = _as.startup(_keystoreFileNameA, _privateKeyPassA, _keystoreFileNameB, _privateKeyPassB, _asPort).clone();
+        if(_cs == null)
+          System.out.println("wtf");
+        int[] status = _cs.startup(_keystoreFileNameA, _privateKeyPassA, _keystoreFileNameB, _privateKeyPassB, _asPort).clone();
 
         if (status[0] == ChatServer.SUCCESS && status[1] == ChatServer.SUCCESS) {
             // success
             _errorLabel.setText(" ");
+            _cs.connect(_asPort);
         } else if (status[0] == ChatServer.WRONG_PASSWORD || status[1] == ChatServer.WRONG_PASSWORD) {
             // wrong password
             _errorLabel.setText("Keystore was tampered with, or password was incorrect");

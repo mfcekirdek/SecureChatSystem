@@ -24,8 +24,7 @@ public class ChatClientThread extends Thread {
     private Socket _socket = null;
     
     private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
-    private String key = "Bar12345Bar12345"; // 128 bit key
-    private String initVector = "XandomInitVector"; // 16 bytes IV
+
 
     public ChatClientThread(ChatClient client) {
 
@@ -62,11 +61,11 @@ public class ChatClientThread extends Thread {
     public void consumeMessage(String msg) {
 
         if (msg != null) {
-          
-             String hmac = msg.substring(msg.length()-24);
-             String encryptedMsg = msg.substring(0,msg.length()-24);
+             byte[] iv = msg.substring(msg.length()-26, msg.length()-24).getBytes();
+             String hmac = msg.substring(msg.length()-26);
+             String encryptedMsg = msg.substring(0, msg.length()-26);
              String calculatedHMAC = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
-             String decryptedMsg = SymmetricKeyUtil.decrypt(key, initVector, encryptedMsg);
+             String decryptedMsg = SymmetricKeyUtil.decrypt(_client.getSymmetricAESkey().getBytes(), iv, encryptedMsg.getBytes());
 
              if(hmac.equals(calculatedHMAC)) { // Authenticated
                _outputArea.append(decryptedMsg);
