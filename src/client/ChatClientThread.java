@@ -1,30 +1,26 @@
 /**
- *  Created 2/16/2003 by Ting Zhang 
- *  Part of implementation of the ChatClient to receive
- *  all the messages posted to the chat room.
+ * Created 2/16/2003 by Ting Zhang
+ * Part of implementation of the ChatClient to receive
+ * all the messages posted to the chat room.
  */
 package client;
 
-// socket
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
-//  Swing
 import javax.swing.JTextArea;
 
+import org.apache.commons.codec.binary.Base64;
 import util.SymmetricKeyUtil;
-//  Crypto
 
 public class ChatClientThread extends Thread {
 
     private ChatClient _client;
     private JTextArea _outputArea;
     private Socket _socket = null;
-    
-    private String hmacKey = "qnscAdgRlkIhAUPY44oiexBKtQbGY0orf7OV1I50";
-
 
     public ChatClientThread(ChatClient client) {
 
@@ -37,10 +33,10 @@ public class ChatClientThread extends Thread {
     public void run() {
 
         try {
-            
+
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
-                    _socket.getInputStream()));
+                            _socket.getInputStream()));
 
             String msg;
 
@@ -61,16 +57,24 @@ public class ChatClientThread extends Thread {
     public void consumeMessage(String msg) {
 
         if (msg != null) {
-             byte[] iv = msg.substring(msg.length()-26, msg.length()-24).getBytes();
-             String hmac = msg.substring(msg.length()-26);
-             String encryptedMsg = msg.substring(0, msg.length()-26);
-             String calculatedHMAC = SymmetricKeyUtil.getHMACMD5(hmacKey, encryptedMsg);
-             String decryptedMsg = SymmetricKeyUtil.decrypt(_client.getSymmetricAESkey().getBytes(), iv, encryptedMsg.getBytes());
 
-             if(hmac.equals(calculatedHMAC)) { // Authenticated
-               _outputArea.append(decryptedMsg);
-             }
+            String[] msgParts = msg.split("#");
+
+            byte[] encryptedMsg = Base64.decodeBase64(msgParts[0]);
+            byte[] iv = Base64.decodeBase64(msgParts[1]);
+            String hmac = msgParts[2]; /* TODO check hash mac*/
+
+            String calculatedHMAC = "1";//SymmetricKeyUtil.getHMACMD5(hmacKey.getBytes(), encryptedMsg);
+            byte[] decryptedMsg =
+                    SymmetricKeyUtil.decrypt(Base64.decodeBase64(_client.getSymmetricAESkey()), iv, encryptedMsg);
+
+            if (hmac.equals(calculatedHMAC)) { // Authenticated
+                try {
+                    _outputArea.append(new String(decryptedMsg, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-
     }
 }
