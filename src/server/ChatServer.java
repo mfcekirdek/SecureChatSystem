@@ -270,6 +270,9 @@ public class ChatServer {
             String toSend = Base64.encodeBase64String(encryptedAES);//new String(encryptedAES, "UTF-8");
             _out.println(toSend);
             System.out.println("Symmetric key: " + Base64.encodeBase64String(symmetricAESkeys[roomNumber-1]));
+            
+            
+            
 
         } catch (Exception e) {
             System.out.println("AS thread error: " + e.getMessage());

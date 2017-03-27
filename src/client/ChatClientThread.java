@@ -62,9 +62,9 @@ public class ChatClientThread extends Thread {
 
             byte[] encryptedMsg = Base64.decodeBase64(msgParts[0]);
             byte[] iv = Base64.decodeBase64(msgParts[1]);
-            String hmac = msgParts[2]; /* TODO check hash mac*/
+            String hmac = msgParts[2]; 
+            String calculatedHMAC = SymmetricKeyUtil.getHMACMD5(_client.getSymmetricAESkey().getBytes(), msgParts[0]);
 
-            String calculatedHMAC = "1";//SymmetricKeyUtil.getHMACMD5(hmacKey.getBytes(), encryptedMsg);
             byte[] decryptedMsg =
                     SymmetricKeyUtil.decrypt(Base64.decodeBase64(_client.getSymmetricAESkey()), iv, encryptedMsg);
 

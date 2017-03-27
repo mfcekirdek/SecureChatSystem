@@ -305,8 +305,8 @@ public class ChatClient {
             byte[] encryptedMsg = SymmetricKeyUtil.encrypt(Base64.decodeBase64(symmetricAESkey), iv, msg.getBytes());
             String ivStr = Base64.encodeBase64String(iv);
             String encryptedMsgStr = Base64.encodeBase64String(encryptedMsg);
-            /* TODO: calculate hash mac*/
-            String hmac = "1"; //SymmetricKeyUtil.getHMACMD5(dhParameters.get("secret"), encryptedMsg);
+            
+            String hmac = SymmetricKeyUtil.getHMACMD5(symmetricAESkey.getBytes(), encryptedMsgStr);
             _out.println(encryptedMsgStr + "#" + ivStr + "#" + hmac);
 
         } catch (Exception e) {
