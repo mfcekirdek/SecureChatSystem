@@ -81,8 +81,9 @@ public class ChatServerLoginPanel extends JPanel {
         _startupButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                _cs._layout.show(_cs._app.getContentPane(), "Clients");
-                startup();
+                int status = startup();
+                if(status == ChatServer.SUCCESS)
+                    _cs._layout.show(_cs._app.getContentPane(), "Clients");
             }
         });
     }
@@ -129,7 +130,7 @@ public class ChatServerLoginPanel extends JPanel {
         add(field);
     }
 
-    private void startup() {
+    private int startup() {
         int _asPort;
 
         String _keystoreFileNameA = _keystoreFileNameAField.getText();
@@ -145,7 +146,7 @@ public class ChatServerLoginPanel extends JPanel {
 
             _errorLabel.setText("Missing required field.");
 
-            return;
+            return ChatServer.ERROR;
 
         } else {
             _errorLabel.setText(" ");
@@ -159,7 +160,7 @@ public class ChatServerLoginPanel extends JPanel {
 
             _errorLabel.setText("Port field is not numeric.");
 
-            return;
+            return ChatServer.ERROR;
         }
 
         int[] status = _cs.startup(_keystoreFileNameA, _privateKeyPassA, _keystoreFileNameB, _privateKeyPassB, _asPort).clone();
@@ -168,6 +169,7 @@ public class ChatServerLoginPanel extends JPanel {
             // success
             _errorLabel.setText(" ");
             _cs.connect(_asPort);
+            return ChatServer.SUCCESS;
         } else if (status[0] == ChatServer.WRONG_PASSWORD || status[1] == ChatServer.WRONG_PASSWORD) {
             // wrong password
             _errorLabel.setText("Keystore was tampered with, or password was incorrect");
@@ -176,6 +178,8 @@ public class ChatServerLoginPanel extends JPanel {
         } else if (status[0] == ChatServer.ERROR || status[1] == ChatServer.ERROR) {
             _errorLabel.setText("Unknown Error!");
         }
+
+        return ChatServer.ERROR;
     }
 
     public static void main(String[] args) {
