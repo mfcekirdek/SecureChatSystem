@@ -113,7 +113,9 @@ public class ChatServer {
         _app.getContentPane().setLayout(_layout);
         _app.getContentPane().add(_loginPanel, "Login");
         _app.getContentPane().add(_clientsPanel, "Clients");
-        _app.setMinimumSize(new Dimension(360, 310));
+        _app.setPreferredSize(new Dimension(360, 310));
+        _app.setResizable(false);
+        _app.setLocationByPlatform(true);
         _app.pack();
         _app.setVisible(true);
         _app.addWindowListener(new WindowAdapter() {
@@ -127,7 +129,7 @@ public class ChatServer {
                 }
             }
         });
-        logger.log(Level.INFO, "Started server GUI.");
+        logger.log(Level.INFO, "Started server GUI");
 
     }
 
@@ -142,12 +144,14 @@ public class ChatServer {
             c.getClientSocket().shutdownOutput();
             c.getClientSocket().close();
         }
+        logger.log(Level.INFO, "Server closed");
+        _app.dispose();
+        System.exit(0);
     }
 
     public void connect(int port) {
 
         new ChatServerHelperThread(this, port).start();
-
     }
 
 
@@ -169,14 +173,16 @@ public class ChatServer {
 
         int[] results = new int[2];
         results[0] = readKeyStore(keyStoreFilenameA, ALIAS_A, keyStorePasswordA, KEY_PASSWORD_A, 1);
-
         results[1] = readKeyStore(keyStoreFilenameB, ALIAS_B, keyStorePasswordB, KEY_PASSWORD_B, 2);
-        logger.log(Level.INFO, "Read Keystore B. Status: " + results[0]);
 
-        readChatRoomCertificatesFromFile();
+        if(results[0] == SUCCESS && results[1] == SUCCESS) {
 
-        generateAESKeys();
+            readChatRoomCertificatesFromFile();
+            generateAESKeys();
 
+        } else {
+            logger.log(Level.SEVERE, "Startup error! ");
+        }
         return results;
     }
 
@@ -305,11 +311,10 @@ public class ChatServer {
             logger.log(Level.INFO, "Obtained chat room AES key");
 
         } catch (Exception e) {
-            System.out.println("AS thread error: " + e.getMessage());
+            logger.log(Level.SEVERE, "AS thread error: " + e.getMessage());
             e.printStackTrace();
         }
 
-        _app.setTitle(_app.getTitle() + String.valueOf(roomNumber));
         return roomNumber;
     }
 
@@ -341,18 +346,16 @@ public class ChatServer {
         } catch (KeyStoreException e) {
             result = ChatServer.ERROR;
         } catch (IOException e) {
-            System.out.println(e);
             result = ChatServer.WRONG_PASSWORD;
             if (e instanceof FileNotFoundException) {
                 result = ChatServer.KEYSTORE_FILE_NOT_FOUND;
-                System.out.println("LOL");
             }
         }
 
 
         this.kpArr[roomNumber - 1] = kp;
 
-        logger.log(Level.INFO, "Read Keystore: " + keyStoreFilename + "Status: " + result);
+        logger.log(Level.INFO, "Read Keystore: " + keyStoreFilename + "\n\tStatus: " + result);
 
         return result;
     }
@@ -401,6 +404,7 @@ public class ChatServer {
         private int _port;
 
         public ChatServerHelperThread(ChatServer cs, int port) {
+            super("ChatServerHelperThread");
             _cs = cs;
             _port = port;
         }
@@ -416,7 +420,7 @@ public class ChatServer {
                 while (true) {
 
                     Socket socket = _serverSocket.accept();
-                    logger.log(Level.INFO, "Accepted new connection");
+                    logger.log(Level.INFO, "Accepted new connection: Client " + _clientID);
                     ClientRecord clientRecord = new ClientRecord(_clientID, socket);
 
                     int roomNumber = authenticate(clientRecord);
@@ -436,7 +440,7 @@ public class ChatServer {
 
             } catch (IOException e) {
 
-                System.err.println("Could not listen on port: " + _port);
+               logger.log(Level.SEVERE, "Could not listen on port: " + _port);
                 System.exit(-1);
 
             } catch (Exception e) {
