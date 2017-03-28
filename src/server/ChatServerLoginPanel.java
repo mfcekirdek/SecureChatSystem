@@ -4,9 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ChatServerLoginPanel extends JPanel {
 
+    private final static Logger logger = Logger.getLogger(ChatServerLoginPanel.class.getName());
     JPasswordField _privateKeyPassAField;
     JPasswordField _privateKeyPassBField;
     JTextField _portField;
@@ -17,21 +20,22 @@ public class ChatServerLoginPanel extends JPanel {
     ChatServer _cs;
 
     public ChatServerLoginPanel(ChatServer cs) {
-      _cs = cs;
+
+        _cs = cs;
+        logger.setLevel(Level.CONFIG);
 
         try {
             componentInit();
         } catch (Exception e) {
-            System.out.println("AuthServerPanel error: " + e.getMessage());
+            logger.log(Level.SEVERE, "AuthServerPanel error: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    void componentInit() throws Exception {
-        /* TODO: TitledBorderLayout */
+    private void componentInit() throws Exception {
+
         GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
-        JLabel label;
 
         setLayout(gridBag);
 
@@ -62,28 +66,33 @@ public class ChatServerLoginPanel extends JPanel {
 
         _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 6, 2, 1);
 
-        // just for testing purposs
         _errorLabel.setForeground(Color.red);
 
         _startupButton = new JButton("Startup");
         c.gridx = 1;
         c.gridy = 8;
         c.gridwidth = 2;
-        c.insets = new Insets(10, 10,20, 10);
+        c.insets = new Insets(10, 10, 20, 10);
         gridBag.setConstraints(_startupButton, c);
         add(_startupButton);
-        
+
+        setFieldsDefaults();
+
+        _startupButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+                _cs._layout.show(_cs._app.getContentPane(), "Clients");
+                startup();
+            }
+        });
+    }
+
+    private void setFieldsDefaults() {
         _keystoreFileNameAField.setText("server1keystore.jks");
         _keystoreFileNameBField.setText("server2keystore.jks");
         _privateKeyPassAField.setText("s3rv3r1");
         _privateKeyPassBField.setText("s3rv3r2");
         _portField.setText("7777");
-        
-        _startupButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                startup();
-            }
-        });
     }
 
     JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
@@ -152,8 +161,7 @@ public class ChatServerLoginPanel extends JPanel {
 
             return;
         }
-        if(_cs == null)
-          System.out.println("wtf");
+
         int[] status = _cs.startup(_keystoreFileNameA, _privateKeyPassA, _keystoreFileNameB, _privateKeyPassB, _asPort).clone();
 
         if (status[0] == ChatServer.SUCCESS && status[1] == ChatServer.SUCCESS) {
