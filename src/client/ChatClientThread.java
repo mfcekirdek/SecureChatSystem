@@ -10,6 +10,8 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JTextArea;
 
@@ -20,6 +22,7 @@ import util.SymmetricKeyUtil;
 
 public class ChatClientThread extends Thread {
 
+    private final static Logger logger = Logger.getLogger(ChatClientThread.class.getName());
     private ChatClient _client;
     private JTextArea _outputArea;
     private Socket _socket = null;
@@ -27,6 +30,7 @@ public class ChatClientThread extends Thread {
     public ChatClientThread(ChatClient client) {
 
         super("ChatClientThread");
+        logger.setLevel(Level.INFO);
         _client = client;
         _socket = client.getSocket();
         _outputArea = client.getOutputArea();
@@ -49,7 +53,7 @@ public class ChatClientThread extends Thread {
 
         } catch (SocketException e) {
             closeConnection();
-            System.out.println("Client socket kapandi.");
+            logger.log(Level.INFO, "Closed connection");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -59,7 +63,6 @@ public class ChatClientThread extends Thread {
 
         if (msg != null) {
 
-            System.out.println("MESAJ: " + msg);
             String[] msgParts = msg.split("#");
             int msgType = Integer.valueOf(msgParts[0]);
 
@@ -84,10 +87,9 @@ public class ChatClientThread extends Thread {
                 }
             } else if (msgType == 0) { // Refresh sym key
                 try {
-                    System.out.println(_client.getSymmetricAESkey());
                     String decryptedMsg = PublicKeyUtil.decrypt(msgParts[1], _client.getPrivateKey());
                     _client.setSymmetricAESKey(decryptedMsg);
-                    System.out.println(_client.getSymmetricAESkey());
+                    logger.log(Level.INFO, "Key refreshment is done");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -66,7 +66,7 @@ public class ChatServerThread extends Thread {
                 }
             }
 
-            logger.log(Level.INFO, "Closed connection.");
+            logger.log(Level.INFO, "Closed connection: Client " + _client.getClientID());
             removeClient();
             _server.refreshSymmetricAESKey(_roomNumber);
             _server._clientsPanel.updateClientLists();

@@ -15,6 +15,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -26,23 +28,26 @@ import javax.swing.text.DefaultCaret;
 
 public class ChatRoomPanel extends JPanel {
 
-    JTextArea _inputArea;
-    JTextArea _outputArea;
-    JButton _quitButton;
-    ChatClient _client;
+    private final static Logger logger = Logger.getLogger(ChatClient.class.getName());
+    private JTextArea _inputArea;
+    private JTextArea _outputArea;
+    private JButton _quitButton;
+    private ChatClient _client;
 
     public ChatRoomPanel(ChatClient client) {
+
+        logger.setLevel(Level.INFO);
         _client = client;
 
         try {
             componentInit();
         } catch (Exception e) {
-            System.out.println("ChatRoomPanel error: " + e.getMessage());
+            logger.log(Level.SEVERE, "ChatRoomPanel error: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    void componentInit() throws Exception {
+    private void componentInit() throws Exception {
         GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
 
@@ -79,8 +84,8 @@ public class ChatRoomPanel extends JPanel {
 
     }
 
-    JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
-                    int x, int y, int width, int height) {
+    private JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
+                            int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
         JLabel label = new JLabel(labelStr);
         if (align == SwingConstants.LEFT) {
@@ -97,8 +102,8 @@ public class ChatRoomPanel extends JPanel {
         return label;
     }
 
-    JTextArea addArea(GridBagLayout gridBag, Dimension prefSize,
-                      int x, int y) {
+    private JTextArea addArea(GridBagLayout gridBag, Dimension prefSize,
+                              int x, int y) {
         JScrollPane scroller;
         JTextArea area = new JTextArea();
         GridBagConstraints c = new GridBagConstraints();
@@ -124,7 +129,7 @@ public class ChatRoomPanel extends JPanel {
         return _outputArea;
     }
 
-    void inputKeyTyped(KeyEvent e) {
+    private void inputKeyTyped(KeyEvent e) {
         String msg;
 
         if (e.getKeyChar() == KeyEvent.VK_ENTER) {
@@ -137,7 +142,7 @@ public class ChatRoomPanel extends JPanel {
         }
     }
 
-    void quit() {
+    private void quit() {
         _client.quit();
     }
 }
