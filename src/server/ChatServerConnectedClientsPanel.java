@@ -42,13 +42,13 @@ public class ChatServerConnectedClientsPanel extends JPanel {
         JPanel panel = new JPanel();
         TitledBorder titled = new TitledBorder(ROOM_A_STR);
         panel.setBorder(titled);
-        panel.setBounds(5, 5, 165, 260);
+        panel.setBounds(5,5, 165, 260);
         panel.setLayout(null);
         modelRoom1 = new DefaultListModel<>();
         _room1List = new JList(modelRoom1);
         JScrollPane pane = new JScrollPane(_room1List);
 
-        pane.setBounds(8, 17, 150, 235);
+        pane.setBounds(8,17, 150, 235);
         panel.add(pane);
         add(panel);
     }
@@ -57,35 +57,39 @@ public class ChatServerConnectedClientsPanel extends JPanel {
 
         JPanel panel = new JPanel();
         TitledBorder titled = new TitledBorder(ROOM_B_STR);
+        titled.setTitleJustification(TitledBorder.TRAILING);
         panel.setBorder(titled);
-        panel.setBounds(175, 5, 165, 260);
+        panel.setBounds(175,5, 165, 260);
         panel.setLayout(null);
         modelRoom2 = new DefaultListModel<>();
         _room2List = new JList(modelRoom2);
         JScrollPane pane = new JScrollPane(_room2List);
 
-        pane.setBounds(8, 17, 150, 235);
+        pane.setBounds(8,17, 150, 235);
         panel.add(pane);
         add(panel);
     }
 
     public void updateClientLists() {
 
+        String clientTemplate = "Client ";
         modelRoom1 = new DefaultListModel<String>();
         modelRoom2 = new DefaultListModel<String>();
         Collection<ClientRecord> clientsA = _cs.getClientRecordsA().values();
         Collection<ClientRecord> clientsB = _cs.getClientRecordsB().values();
 
 
-        for (ClientRecord c : clientsA) {
-            if (!modelRoom1.contains(String.valueOf(c.getClientID()))) {
-                modelRoom1.addElement(String.valueOf(c.getClientID()));
+        for(ClientRecord c : clientsA){
+            String item = clientTemplate + c.getClientID();
+            if(!modelRoom1.contains(item)){
+                modelRoom1.addElement(item);
             }
         }
 
-        for (ClientRecord c : clientsB) {
-            if (!modelRoom2.contains(String.valueOf(c.getClientID()))) {
-                modelRoom2.addElement(String.valueOf(c.getClientID()));
+        for(ClientRecord c : clientsB){
+            String item = clientTemplate + c.getClientID();
+            if(!modelRoom2.contains(item)){
+                modelRoom2.addElement(item);
             }
         }
         _room1List.setModel(modelRoom1);
