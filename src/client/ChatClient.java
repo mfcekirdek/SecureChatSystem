@@ -36,17 +36,17 @@ public class ChatClient {
     public static final int CONNECTION_REFUSED = 1;
     public static final int BAD_HOST = 2;
     public static final int ERROR = 3;
-    String _loginName;
-    ChatServer _server;
-    ChatClientThread _thread;
-    ChatLoginPanel _loginPanel;
-    ChatRoomPanel _chatPanel;
-    PrintWriter _out = null;
-    BufferedReader _in = null;
-    CardLayout _layout;
-    JFrame _appFrame;
+    private String _loginName;
+    private ChatServer _server;
+    private ChatClientThread _thread;
+    private ChatLoginPanel _loginPanel;
+    private ChatRoomPanel _chatPanel;
+    private PrintWriter _out = null;
+    private BufferedReader _in = null;
+    private CardLayout _layout;
+    private JFrame _app;
 
-    Socket _socket = null;
+    private Socket _socket = null;
 
     private String symmetricAESkey; // 128 bit key
     private X509Certificate clientCert;
@@ -73,13 +73,13 @@ public class ChatClient {
             e.printStackTrace();
         }
 
-        _layout.show(_appFrame.getContentPane(), "Login");
+        _layout.show(_app.getContentPane(), "Login");
 
     }
 
     public void run() {
-        _appFrame.pack();
-        _appFrame.setVisible(true);
+        _app.pack();
+        _app.setVisible(true);
 
     }
 
@@ -98,14 +98,14 @@ public class ChatClient {
     // Component initialization
     private void initComponents() throws Exception {
 
-        _appFrame = new JFrame("Bil448 Chat Room ");
+        _app = new JFrame("Bil448 Chat Room ");
         _layout = new CardLayout();
-        _appFrame.getContentPane().setLayout(_layout);
+        _app.getContentPane().setLayout(_layout);
         _loginPanel = new ChatLoginPanel(this);
         _chatPanel = new ChatRoomPanel(this);
-        _appFrame.getContentPane().add(_loginPanel, "Login");
-        _appFrame.getContentPane().add(_chatPanel, "ChatRoom");
-        _appFrame.addWindowListener(new WindowAdapter() {
+        _app.getContentPane().add(_loginPanel, "Login");
+        _app.getContentPane().add(_chatPanel, "ChatRoom");
+        _app.addWindowListener(new WindowAdapter() {
 
             public void windowClosing(WindowEvent e) {
                 quit();
@@ -146,12 +146,7 @@ public class ChatClient {
     public int connect(String loginName, char[] password, String keyStoreName,
                        char[] keyStorePassword, String caHost, int caPort, String serverHost, int serverPort,
                        int roomNumber) {
-    /*
-     * System.out.println("Loginname : " + loginName + " password : " + String.valueOf(password) +
-     * " keyStoreName : " + keyStoreName + " keyStorePassword : " + String.valueOf(keyStorePassword)
-     * + " caHost : " + caHost + " caPort : " + caPort + " serverHost :" + serverHost +
-     * " serverPort : " + serverPort + " roomNumber : " + roomNumber);
-     */
+
         int result = ERROR;
 
         try {
@@ -194,12 +189,13 @@ public class ChatClient {
                     String isVerified;
                     if ((isVerified = _in.readLine()) != null) {
                         if (!Boolean.valueOf(isVerified)) {
-                            System.err.println("SERVER DID NOT VERIFY THE CLIENT..");
+                            logger.log(Level.SEVERE, "Server did not verify the client certificate");
                             _in.close();
                             _out.close();
                             ois.close();
                             oos.close();
                             _socket.close();
+                            logger.log(Level.SEVERE, "Closed connection. Now exiting...");
                             System.exit(0);
                         }
                     }
@@ -256,7 +252,8 @@ public class ChatClient {
                     }
 
 
-                    _layout.show(_appFrame.getContentPane(), "ChatRoom");
+                    _app.setTitle(_app.getTitle() + String.valueOf(roomNumber));
+                    _layout.show(_app.getContentPane(), "ChatRoom");
                     _thread = new ChatClientThread(ChatClient.this);
                     _thread.start();
 
@@ -264,12 +261,12 @@ public class ChatClient {
 
                 } catch (UnknownHostException e) {
 
-                    System.err.println("Don't know about the serverHost: " + serverHost);
+                    logger.log(Level.SEVERE, "Don't know about the serverHost: " + serverHost);
                     System.exit(1);
 
                 } catch (IOException e) {
 
-                    System.err.println("Couldn't get I/O for " + "the connection to the serverHost: "
+                    logger.log(Level.SEVERE, "Couldn't get I/O for " + "the connection to the serverHost: "
                             + serverHost);
                     logger.log(Level.SEVERE, "ChatClient error: " + e.getMessage());
                     e.printStackTrace();
@@ -282,7 +279,7 @@ public class ChatClient {
 
                 } catch (Exception e) {
 
-                    System.out.println("ChatClient err: " + e.getMessage());
+                    logger.log(Level.SEVERE, "ChatClient err: " + e.getMessage());
                     e.printStackTrace();
                 }
 
