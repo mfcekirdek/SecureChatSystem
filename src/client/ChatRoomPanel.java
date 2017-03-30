@@ -28,7 +28,10 @@ import javax.swing.text.DefaultCaret;
 
 public class ChatRoomPanel extends JPanel {
 
+    // logger
     private final static Logger logger = Logger.getLogger(ChatClient.class.getName());
+
+    // UI objects
     private JTextArea _inputArea;
     private JTextArea _outputArea;
     private JButton _quitButton;
@@ -47,6 +50,9 @@ public class ChatRoomPanel extends JPanel {
         }
     }
 
+    /**
+     * Initializes UI components
+     */
     private void componentInit() throws Exception {
         GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -84,6 +90,17 @@ public class ChatRoomPanel extends JPanel {
 
     }
 
+    /**
+     * Adds a label to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param labelStr text of label
+     * @param align alignment
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     * @param width width of object in terms of grid
+     * @param height height of object in terms of grid
+     * @return new label object
+     */
     private JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
                             int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
@@ -102,6 +119,13 @@ public class ChatRoomPanel extends JPanel {
         return label;
     }
 
+    /**
+     * Adds a text field to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param prefSize preferred size of area
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     */
     private JTextArea addArea(GridBagLayout gridBag, Dimension prefSize,
                               int x, int y) {
         JScrollPane scroller;
@@ -125,9 +149,14 @@ public class ChatRoomPanel extends JPanel {
         return area;
     }
 
+    /**
+     * Returns the output area
+     * @return JTextArea object
+     */
     public JTextArea getOutputArea() {
         return _outputArea;
     }
+
 
     private void inputKeyTyped(KeyEvent e) {
         String msg;
@@ -142,6 +171,9 @@ public class ChatRoomPanel extends JPanel {
         }
     }
 
+    /**
+     * Calls client's quit method
+     */
     private void quit() {
         _client.quit();
     }

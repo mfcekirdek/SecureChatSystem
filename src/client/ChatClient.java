@@ -31,40 +31,52 @@ import java.util.logging.Logger;
 
 public class ChatClient {
 
+    // Logger
     private final static Logger logger = Logger.getLogger(ChatClient.class.getName());
+
+    // Status codes
     public static final int SUCCESS = 0;
     public static final int CONNECTION_REFUSED = 1;
     public static final int BAD_HOST = 2;
     public static final int ERROR = 3;
-    private String _loginName;
-    private ChatServer _server;
-    private ChatClientThread _thread;
+
+    // UI variables
+    private JFrame _app;
+    private CardLayout _layout;
     private ChatLoginPanel _loginPanel;
     private ChatRoomPanel _chatPanel;
+    private ChatClientThread _thread;
+
+    // Client variables
+    private static int selectedRoomNumber = 1;
+    private Socket _socket = null;
+    private String _loginName;
     private PrintWriter _out = null;
     private BufferedReader _in = null;
-    private CardLayout _layout;
-    private JFrame _app;
 
-    private Socket _socket = null;
+    // 128 Bit AES key
+    private String symmetricAESkey;
 
-    private String symmetricAESkey; // 128 bit key
+    // Client certificate
     private X509Certificate clientCert;
-    private static int selectedRoomNumber = 1;
+
+    // Diffie-Hellman Parameters of client
     private HashMap<String, BigInteger> dhParameters;
+
+    // Diffie-Hellman Parameters of server
     private HashMap<String, BigInteger> serverDhParameters;
+
+    // Diffie-Hellman shared key between client and server
     private BigInteger sharedKey;
     private KeyPair kp;
 
-
-    // ChatClient Constructor
-    //
-    // empty, as you can see.
+    /**
+     * Default constructor.
+     */
     public ChatClient() {
 
         logger.setLevel(Level.INFO);
         _loginName = null;
-        _server = null;
 
         try {
             initComponents();
@@ -83,9 +95,11 @@ public class ChatClient {
 
     }
 
-    // main
-    //
-    // Construct the app inside a frame, in the center of the screen
+    /**
+     * Runs applications
+     *
+     * @param args
+     */
     public static void main(String[] args) {
 
         ChatClient app = new ChatClient();
@@ -93,10 +107,10 @@ public class ChatClient {
         app.run();
     }
 
-    // initComponents
-    //
-    // Component initialization
-    private void initComponents() throws Exception {
+    /**
+     * Initializes application frame and panels.
+     */
+    private void initComponents() {
 
         _app = new JFrame("Bil448 Chat Room ");
         _layout = new CardLayout();
@@ -115,9 +129,10 @@ public class ChatClient {
 
     }
 
-    // quit
-    //
-    // Called when the application is about to quit.
+    /**
+     * Closes the sockets and quits.
+     * This method is called when Window Close(X) button clicked.
+     */
     public void quit() {
 
         try {
@@ -127,33 +142,32 @@ public class ChatClient {
 
         } catch (Exception err) {
             logger.log(Level.SEVERE, err.getMessage());
-            //err.printStackTrace();
         }
-
         System.exit(0);
     }
 
-    //
-    // connect
-    //
-    // Called from the login panel when the user clicks the "connect"
-    // button. You will need to modify this method to add certificate
-    // authentication.
-    // There are two passwords : the keystorepassword is the password
-    // to access your private key on the file system
-    // The other is your authentication password on the CA.
-    //
+    /**
+     * @param loginName        Client's login name
+     * @param password         Client's password to read public & private key pair
+     * @param keyStoreName
+     * @param keyStorePassword
+     * @param serverHost       Server's host address
+     * @param serverPort       Server's port number
+     * @param roomNumber       Room number to be connected
+     * @return
+     */
     public int connect(String loginName, char[] password, String keyStoreName,
-                       char[] keyStorePassword, String caHost, int caPort, String serverHost, int serverPort,
+                       char[] keyStorePassword, String serverHost, int serverPort,
                        int roomNumber) {
 
-        int result = ERROR;
+        int result;
 
         try {
-            kp =
-                    PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName, loginName, keyStorePassword, password);
+            // Read client's keypair from keystore
+            kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreName, loginName, keyStorePassword, password);
 
             if (kp != null) {
+                // If reading is success
                 logger.log(Level.INFO, "Read client key pair");
                 result = SUCCESS;
 
@@ -162,28 +176,33 @@ public class ChatClient {
                     selectedRoomNumber = roomNumber;
 
                     _socket = new Socket(serverHost, serverPort);
+                    _in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
                     _out = new PrintWriter(_socket.getOutputStream(), true);
 
-                    _in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
-
+                    // Get CA certificate from file
                     X509Certificate caCert = PublicKeyUtil.getCertFromFile("CA", "CA.cer");
 
+                    // Send hello message to server to start the protocol
                     _out.println("Hello#" + _loginName + "#" + selectedRoomNumber);
 
                     ObjectInputStream ois = new ObjectInputStream(_socket.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(_socket.getOutputStream());
 
-
+                    // Read server's certificate from stream
                     X509Certificate serverCert = (X509Certificate) ois.readObject();
 
                     try {
+                        // try to verify server's certificate
                         serverCert.verify(caCert.getPublicKey());
                     } catch (Exception e) {
+                        // If certificate is not verified, close the connection and quit.
                         _socket.close();
                         System.exit(0);
                     }
 
-                    clientCert = PublicKeyUtil.getCertFromFile(_loginName,_loginName + ".cer");
+                    // Read client's own certificate from file
+                    clientCert = PublicKeyUtil.getCertFromFile(_loginName, _loginName + ".cer");
+                    // Send client certificate to server
                     oos.writeObject(clientCert);
 
                     String isVerified;
@@ -199,7 +218,7 @@ public class ChatClient {
                             System.exit(0);
                         }
                     }
-
+                    // Read encryted DH parameters of server
                     HashMap<String, String> tmp = (HashMap<String, String>) ois.readObject();
                     serverDhParameters = new HashMap<String, BigInteger>();
                     BigInteger decryptedServerDHPublic =
@@ -212,10 +231,13 @@ public class ChatClient {
                     serverDhParameters.put("generatorValue", decryptedServerDHGeneratorValue);
                     serverDhParameters.put("primeValue", decryptedServerDHPrimeValue);
 
+                    // Generate DH parameters for client to send to server
                     dhParameters =
                             DH.getDHParameters(serverDhParameters.get("generatorValue"),
                                     serverDhParameters.get("primeValue"));
                     HashMap<String, String> dhParametersToSend = new HashMap<String, String>();
+
+                    // Encrypt parameters with server's public key
                     String encryptedClientDHPublic =
                             PublicKeyUtil.encrypt(String.valueOf(dhParameters.get("public")),
                                     serverCert.getPublicKey());
@@ -228,29 +250,33 @@ public class ChatClient {
                     dhParametersToSend.put("public", encryptedClientDHPublic);
                     dhParametersToSend.put("generatorValue", encryptedClientDHGeneratorValue);
                     dhParametersToSend.put("primeValue", encryptedClientDHPrimeValue);
+
+                    // send encrypted DH parameters
                     oos.writeObject(dhParametersToSend);
 
+                    // Calculate DH shared key
                     sharedKey =
                             DH.getSharedKey(serverDhParameters.get("public"), dhParameters.get("secret"),
                                     dhParameters.get("primeValue"));
 
+                    // Calculate hash of shared key
                     byte[] hashOfSharedKey =
                             SymmetricKeyUtil.generateMD5Hash(String.valueOf(sharedKey)).getBytes();
-
                     byte[] hashOfSharedKey16Bytes = Arrays.copyOf(hashOfSharedKey, 16);
 
                     String encryptedChatRoomKey;
                     byte[] zeroIV = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+                    // Read encrypted chat room key and decrypt with DH shared key
                     if ((encryptedChatRoomKey = _in.readLine()) != null) {
 
                         byte[] decryptedChatRoomKey =
                                 SymmetricKeyUtil.decrypt(hashOfSharedKey16Bytes, zeroIV,
                                         Base64.decodeBase64(encryptedChatRoomKey));
                         symmetricAESkey = Base64.encodeBase64String(decryptedChatRoomKey);
+                        // debug log
                         logger.log(Level.CONFIG, "Symmetric AES key: " + symmetricAESkey);
                     }
-
 
                     _app.setTitle(_app.getTitle() + String.valueOf(roomNumber));
                     _layout.show(_app.getContentPane(), "ChatRoom");
@@ -259,13 +285,12 @@ public class ChatClient {
 
                     return result;
 
-                } catch(EOFException e) {
+                } catch (EOFException e) {
                     logger.log(Level.SEVERE, "Possible duplicate login name");
                     JOptionPane.showMessageDialog(_app, "There is a connected user with the same login name in room",
                             "Multiple Login Attempt", JOptionPane.ERROR_MESSAGE);
                     System.exit(1);
-                }
-                catch (UnknownHostException e) {
+                } catch (UnknownHostException e) {
 
                     logger.log(Level.SEVERE, "Don't know about the serverHost: " + serverHost);
                     System.exit(1);
@@ -308,15 +333,18 @@ public class ChatClient {
         return ERROR;
     }
 
-    // sendMessage
-    //
-    // Called from the ChatPanel when the user types a carrige return.
+    /**
+     * Sends an ecrypted message to server
+     *
+     * @param msg Message to encrypt and send
+     */
     public void sendMessage(String msg) {
 
         try {
-            msg = _loginName + "> " + msg;
+            msg = _loginName + " > " + msg;
 
             int msgType = 1;
+            // Generate a 16 bytes long initialization vector
             byte[] iv = SymmetricKeyUtil.generate16BytesIV();
 
             byte[] encryptedMsg =
@@ -324,37 +352,61 @@ public class ChatClient {
             String ivStr = Base64.encodeBase64String(iv);
             String encryptedMsgStr = Base64.encodeBase64String(encryptedMsg);
 
+            // Calculate HMAC
             String hmac = SymmetricKeyUtil.getHMACMD5(symmetricAESkey.getBytes(), encryptedMsgStr);
+
+            // Send encrypted message, IV and HMAC
             _out.println(msgType + "#" + encryptedMsgStr + "#" + ivStr + "#" + hmac);
+
             logger.log(Level.CONFIG, "Sent message");
+
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage());
         }
 
     }
 
+    /**
+     * Returns socket object
+     *
+     * @return Socket object
+     */
     public Socket getSocket() {
 
         return _socket;
     }
 
+    /**
+     * Returns chat area of chat panel
+     *
+     * @return Chat area
+     */
     public JTextArea getOutputArea() {
 
         return _chatPanel.getOutputArea();
     }
 
+    /**
+     * Returns symmetric AES key
+     *
+     * @return symmetric key
+     */
     public String getSymmetricAESkey() {
         return symmetricAESkey;
     }
 
-    public PublicKey getPublicKey() {
-        return this.kp.getPublic();
-    }
-
+    /**
+     * Returns private key read from file
+     * @return private key
+     */
     public PrivateKey getPrivateKey() {
         return this.kp.getPrivate();
     }
 
+    /**
+     * Sets symmetric AES key
+     * @param symmetricAESkey new key
+     */
     public void setSymmetricAESKey(String symmetricAESkey) {
         this.symmetricAESkey = symmetricAESkey;
     }

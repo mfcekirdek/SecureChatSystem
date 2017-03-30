@@ -59,6 +59,10 @@ public class ChatClientThread extends Thread {
         }
     }
 
+    /**
+     * Decrypts incoming message, verify its HMAC and outputs.
+     * @param msg Incoming message
+     */
     public void consumeMessage(String msg) {
 
         if (msg != null) {
@@ -67,27 +71,36 @@ public class ChatClientThread extends Thread {
             int msgType = Integer.valueOf(msgParts[0]);
 
             if (msgType == 1) {
+                // ordinary message
 
                 byte[] encryptedMsg = Base64.decodeBase64(msgParts[1]);
                 byte[] iv = Base64.decodeBase64(msgParts[2]);
                 String hmac = msgParts[3];
+
+                // Calculate HMAC on incoming message
                 String calculatedHMAC =
                         SymmetricKeyUtil.getHMACMD5(_client.getSymmetricAESkey().getBytes(), msgParts[1]);
 
+                // Decrypt message
                 byte[] decryptedMsg =
                         SymmetricKeyUtil.decrypt(Base64.decodeBase64(_client.getSymmetricAESkey()), iv,
                                 encryptedMsg);
 
-                if (hmac.equals(calculatedHMAC)) { // Authenticated
+                if (hmac.equals(calculatedHMAC)) {
+                    // Authenticated
                     try {
                         _outputArea.append(new String(decryptedMsg, "UTF-8"));
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
                 }
-            } else if (msgType == 0) { // Refresh sym key
+            } else if (msgType == 0) {
+                // Key refreshment message
                 try {
+                    // Decrypt new key
                     String decryptedMsg = PublicKeyUtil.decrypt(msgParts[1], _client.getPrivateKey());
+
+                    // Set symmetric AES key as new key
                     _client.setSymmetricAESKey(decryptedMsg);
                     logger.log(Level.INFO, "Key refreshment is done");
                 } catch (Exception e) {

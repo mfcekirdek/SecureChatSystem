@@ -28,20 +28,26 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+/**
+ * This class represents login panel of client application
+ */
 public class ChatLoginPanel extends JPanel {
 
+    // logger
     private final static Logger logger = Logger.getLogger(ChatLoginPanel.class.getName());
+
+    // UI variables
     private JTextField _loginNameField;
     private JPasswordField _passwordField;
     private JTextField _serverHostField;
     private JTextField _serverPortField;
-    private JTextField _caHostField;
-    private JTextField _caPortField;
     private JTextField _keyStoreNameField;
     private JComboBox<Integer> _roomNumber;
     private JPasswordField _keyStorePasswordField;
     private JLabel _errorLabel;
     private JButton _connectButton;
+
+    // Client object
     private ChatClient _client;
 
     public ChatLoginPanel(ChatClient client) {
@@ -56,7 +62,10 @@ public class ChatLoginPanel extends JPanel {
         }
     }
 
-    private void componentInit() throws Exception {
+    /**
+     * Initializes UI components
+     */
+    private void componentInit() {
         GridBagLayout gridBag = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
         JLabel label;
@@ -70,9 +79,7 @@ public class ChatLoginPanel extends JPanel {
         addLabel(gridBag, "KeyStore Password: ", SwingConstants.LEFT, 1, 4, 1, 1);
         addLabel(gridBag, "Server Host Name: ", SwingConstants.LEFT, 1, 5, 1, 1);
         addLabel(gridBag, "Server Port: ", SwingConstants.LEFT, 1, 6, 1, 1);
-        addLabel(gridBag, "CA Host Name: ", SwingConstants.LEFT, 1, 7, 1, 1);
-        addLabel(gridBag, "CA Port: ", SwingConstants.LEFT, 1, 8, 1, 1);
-        addLabel(gridBag, "Room Number: ", SwingConstants.LEFT, 1, 9, 1, 1);
+        addLabel(gridBag, "Room Number: ", SwingConstants.LEFT, 1, 7, 1, 1);
 
         _loginNameField = new JTextField();
         addField(gridBag, _loginNameField, 2, 1, 1, 1);
@@ -91,27 +98,18 @@ public class ChatLoginPanel extends JPanel {
         _serverPortField = new JTextField();
         addField(gridBag, _serverPortField, 2, 6, 1, 1);
 
-        _caHostField = new JTextField();
-        addField(gridBag, _caHostField, 2, 7, 1, 1);
-        _caPortField = new JTextField();
-        addField(gridBag, _caPortField, 2, 8, 1, 1);
-
         _roomNumber = new JComboBox<Integer>();
-        addCombobox(gridBag, _roomNumber, 2, 9, 1, 1);
+        addCombobox(gridBag, _roomNumber, 2, 7, 1, 1);
 
 
-        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 10, 2, 1);
+        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 8, 2, 1);
 
         setFieldsDefaults();
 
         _errorLabel.setForeground(Color.red);
 
         _connectButton = new JButton("Connect");
-        c.gridx = 1;
-        c.gridy = 11;
-        c.gridwidth = 2;
-        gridBag.setConstraints(_connectButton, c);
-        add(_connectButton);
+        addButton(gridBag, _connectButton, 1, 9, 2, 1);
 
         _connectButton.addActionListener(new ActionListener() {
 
@@ -121,6 +119,17 @@ public class ChatLoginPanel extends JPanel {
         });
     }
 
+    /**
+     * Adds a label to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param labelStr text of label
+     * @param align alignment
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     * @param width width of object in terms of grid
+     * @param height height of object in terms of grid
+     * @return new label object
+     */
     private JLabel addLabel(GridBagLayout gridBag, String labelStr, int align, int x, int y, int width,
                             int height) {
         GridBagConstraints c = new GridBagConstraints();
@@ -140,6 +149,15 @@ public class ChatLoginPanel extends JPanel {
         return label;
     }
 
+    /**
+     * Adds a text field to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param field JTextField object
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     * @param width width of object in terms of grid
+     * @param height height of object in terms of grid
+     */
     private void addField(GridBagLayout gridBag, JTextField field, int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
         field.setPreferredSize(new Dimension(96, field.getMinimumSize().height));
@@ -151,6 +169,16 @@ public class ChatLoginPanel extends JPanel {
         add(field);
     }
 
+
+    /**
+     * Adds a combobox to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param field JComboBox object
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     * @param width width of object in terms of grid
+     * @param height height of object in terms of grid
+     */
     private void addCombobox(GridBagLayout gridBag, JComboBox<Integer> field, int x, int y, int width,
                              int height) {
         GridBagConstraints c = new GridBagConstraints();
@@ -165,22 +193,48 @@ public class ChatLoginPanel extends JPanel {
         add(field);
     }
 
+    /**
+     * Adds a button to panel
+     * @param gridBag {@link GridBagLayout} object
+     * @param button JButton object
+     * @param x x value of grid cell
+     * @param y y value of grid cell
+     * @param width width of object in terms of grid
+     * @param height height of object in terms of grid
+     */
+    private void addButton(GridBagLayout gridBag, JButton button, int x, int y, int width, int height) {
+
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.gridx = x;
+        c.gridy = y;
+        c.gridwidth = width;
+        c.gridheight = height;
+        c.insets = new Insets(10, 10, 20, 10);
+        gridBag.setConstraints(button, c);
+        add(button);
+
+    }
+
+    /**
+     * Sets fields to given informations.
+     */
     private void setFieldsDefaults() {
 
         _loginNameField.setText("");
         _passwordField.setText("");
         _keyStoreNameField.setText("");
         _keyStorePasswordField.setText("");
-        _caHostField.setText("localhost");
-        _caPortField.setText("6666");
         _serverHostField.setText("localhost");
         _serverPortField.setText("7777");
     }
 
+    /**
+     * Checks login inputs and calls client's connect method if inputs are valid.
+     */
     private void connect() {
 
         int serverPort;
-        int caPort;
 
         String loginName = _loginNameField.getText();
         char[] password = _passwordField.getPassword();
@@ -189,13 +243,11 @@ public class ChatLoginPanel extends JPanel {
         char[] keyStorePassword = _keyStorePasswordField.getPassword();
 
         String serverHost = _serverHostField.getText();
-        String caHost = _caHostField.getText();
         int roomNumber = (Integer) _roomNumber.getSelectedItem();
 
         if (loginName.equals("") || password.length == 0 || keyStoreName.equals("")
                 || keyStorePassword.length == 0 || serverHost.equals("")
-                || _serverPortField.getText().equals("") || caHost.equals("")
-                || _caPortField.getText().equals("")) {
+                || _serverPortField.getText().equals("")) {
 
             _errorLabel.setText("Missing required field.");
 
@@ -210,7 +262,6 @@ public class ChatLoginPanel extends JPanel {
         try {
 
             serverPort = Integer.parseInt(_serverPortField.getText());
-            caPort = Integer.parseInt(_caPortField.getText());
 
         } catch (NumberFormatException nfExp) {
 
@@ -221,11 +272,12 @@ public class ChatLoginPanel extends JPanel {
 
         logger.log(Level.INFO, "Connecting...");
 
-        switch (_client.connect(loginName, password, keyStoreName, keyStorePassword, caHost, caPort,
-                serverHost, serverPort, roomNumber)) {
+        int connectStatus = _client.connect(loginName, password, keyStoreName, keyStorePassword,
+                serverHost, serverPort, roomNumber);
+
+        switch (connectStatus) {
 
             case ChatClient.SUCCESS:
-                // Nothing happens, this panel is now hidden
                 _errorLabel.setText(" ");
                 break;
             case ChatClient.CONNECTION_REFUSED:
