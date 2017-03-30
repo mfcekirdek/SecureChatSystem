@@ -72,7 +72,6 @@ public class ChatServerConnectedClientsPanel extends JPanel {
 
     public void updateClientLists() {
 
-        String clientTemplate = "Client ";
         modelRoom1 = new DefaultListModel<String>();
         modelRoom2 = new DefaultListModel<String>();
         Collection<ClientRecord> clientsA = _cs.getClientRecordsA().values();
@@ -80,14 +79,14 @@ public class ChatServerConnectedClientsPanel extends JPanel {
 
 
         for(ClientRecord c : clientsA){
-            String item = clientTemplate + c.getClientID();
+            String item = c.getLoginName();
             if(!modelRoom1.contains(item)){
                 modelRoom1.addElement(item);
             }
         }
 
         for(ClientRecord c : clientsB){
-            String item = clientTemplate + c.getClientID();
+            String item = c.getLoginName();
             if(!modelRoom2.contains(item)){
                 modelRoom2.addElement(item);
             }

@@ -50,10 +50,8 @@ public class ChatServer {
     private int _clientID = 0;
     private String _hostName = null;
 
-    private static final String ALIAS_A = "Server1";
-    private static final String ALIAS_B = "Server2";
-    private static final char[] KEY_PASSWORD_A = "s3rv3r1k3y".toCharArray();
-    private static final char[] KEY_PASSWORD_B = "s3rv3r2k3y".toCharArray();
+    private static final String ALIAS_1 = "Room1";
+    private static final String ALIAS_2 = "Room2";
 
     JFrame _app;
     CardLayout _layout;
@@ -168,14 +166,14 @@ public class ChatServer {
     }
 
 
-    public int[] startup(String keyStoreFilenameA, char[] keyStorePasswordA,
-                         String keyStoreFilenameB, char[] keyStorePasswordB, int portNumber) {
+    public int[] startup(String keyStoreFile1, char[] keyStorePwd1, char[] keypairPwd1,
+                         String keyStoreFile2, char[] keyStorePwd2, char[] keypairPwd2, int portNumber) {
 
         int[] results = new int[2];
-        results[0] = readKeyStore(keyStoreFilenameA, ALIAS_A, keyStorePasswordA, KEY_PASSWORD_A, 1);
-        results[1] = readKeyStore(keyStoreFilenameB, ALIAS_B, keyStorePasswordB, KEY_PASSWORD_B, 2);
+        results[0] = readKeyStore(keyStoreFile1, ALIAS_1, keyStorePwd1, keypairPwd1, 1);
+        results[1] = readKeyStore(keyStoreFile2, ALIAS_2, keyStorePwd2, keypairPwd2, 2);
 
-        if(results[0] == SUCCESS && results[1] == SUCCESS) {
+        if (results[0] == SUCCESS && results[1] == SUCCESS) {
 
             readChatRoomCertificatesFromFile();
             generateAESKeys();
@@ -198,18 +196,18 @@ public class ChatServer {
 
     private void readChatRoomCertificatesFromFile() {
 
-        String selectedChatRoom = "Server" + 1 + "_CA_.cer";
-        chatRoomCertArr[0] = PublicKeyUtil.getCertFromFile(selectedChatRoom);
+        String selectedChatRoom = "Room" + 1;
+        chatRoomCertArr[0] = PublicKeyUtil.getCertFromFile(selectedChatRoom, selectedChatRoom + ".cer");
 
-        selectedChatRoom = "Server" + 2 + "_CA_.cer";
-        chatRoomCertArr[1] = PublicKeyUtil.getCertFromFile(selectedChatRoom);
+        selectedChatRoom = "Room" + 2;
+        chatRoomCertArr[1] = PublicKeyUtil.getCertFromFile(selectedChatRoom, selectedChatRoom + ".cer");
 
         logger.log(Level.INFO, "Read chat room certificates");
     }
 
+    private ClientRecord authenticate(ClientRecord clientRecord) {
 
-    private int authenticate(ClientRecord clientRecord) {
-
+        String loginName = "";
         int roomNumber = -1;
         Socket socket = clientRecord.getClientSocket();
 
@@ -220,12 +218,23 @@ public class ChatServer {
             _in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             _out = new PrintWriter(socket.getOutputStream(), true);
 
-            X509Certificate caCert = PublicKeyUtil.getCertFromFile("ca.cer");
+            X509Certificate caCert = PublicKeyUtil.getCertFromFile("CA", "CA.cer");
 
             String msg;
 
-            if ((msg = _in.readLine()) != null)
-                roomNumber = Integer.parseInt(msg.substring(msg.indexOf("#") + 1));
+            if ((msg = _in.readLine()) != null) {
+                loginName = msg.substring(msg.indexOf("#"), msg.lastIndexOf("#"));
+                roomNumber = Integer.parseInt(msg.substring(msg.lastIndexOf("#") + 1));
+                clientRecord.setRoom(roomNumber);
+                clientRecord.setLoginName(loginName);
+            }
+
+            if(isMultipleLogin(clientRecord)) {
+                socket.close();
+                logger.log(Level.INFO, "Connection rejected. Same login name: " + clientRecord.getLoginName());
+                return  null;
+            }
+
 
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
@@ -249,7 +258,7 @@ public class ChatServer {
             HashMap<String, BigInteger> parameters = dhParameters.get(_clientID);
 
             HashMap<String, String> dhParametersToSend = new HashMap<String, String>();
-
+            /* TODO: clientCert null exception */
             String encryptedServerDHPublic =
                     PublicKeyUtil
                             .encrypt(String.valueOf(parameters.get("public")), clientCert.getPublicKey());
@@ -315,7 +324,28 @@ public class ChatServer {
             e.printStackTrace();
         }
 
-        return roomNumber;
+        return clientRecord;
+    }
+
+    private boolean isMultipleLogin(ClientRecord client) {
+
+        int room = client.getRoom();
+        Collection<ClientRecord> records = null;
+
+        switch (room){
+
+            case 1:
+                records = _clientsRoom1.values();
+                break;
+            case 2:
+                records = _clientsRoom2.values();
+                break;
+        }
+        for (ClientRecord c : records){
+            if(c.getLoginName().equals(client.getLoginName()))
+                return true; // there is a connected client already  with the same login name
+        }
+        return false;
     }
 
 
@@ -325,15 +355,11 @@ public class ChatServer {
         KeyPair kp = null;
         int result = ChatServer.ERROR;
         try {
-            kp =
-                    PublicKeyUtil.getKeyPairFromKeyStore(keyStoreFilename, alias, keyStorePassword,
-                            keyPassword);
+            kp = PublicKeyUtil.getKeyPairFromKeyStore(keyStoreFilename, alias, keyStorePassword,
+                    keyPassword);
             if (kp != null) {
                 result = ChatServer.SUCCESS;
 
-                // _layout.show(_appFrame.getContentPane(), "ActivityPanel");
-                // _thread = new AuthServerThread(this);
-                // _thread.start();
             } else
                 result = ChatServer.ERROR;
 
@@ -351,7 +377,6 @@ public class ChatServer {
                 result = ChatServer.KEYSTORE_FILE_NOT_FOUND;
             }
         }
-
 
         this.kpArr[roomNumber - 1] = kp;
 
@@ -371,9 +396,9 @@ public class ChatServer {
             clients = _clientsRoom2.values();
         }
 
-        String keyRefreshMsg = "0#";
         if (clients != null) {
             for (ClientRecord c : clients) {
+                String keyRefreshMsg = "0#";
 
                 Socket socket = c.getClientSocket();
 
@@ -385,18 +410,16 @@ public class ChatServer {
                                 PublicKeyUtil.encrypt(Base64.encodeBase64String(symmetricAESkeys[roomNumber - 1]), c.getPublicKey());
                         keyRefreshMsg = keyRefreshMsg + encryptedNewKey;
                         out.println(keyRefreshMsg);
-                        logger.log(Level.INFO, "Published new chat room AES key");
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
                 }
             }
+            logger.log(Level.INFO, "Published new chat room AES key");
         }
     }
-
 
     class ChatServerHelperThread extends Thread {
 
@@ -420,10 +443,15 @@ public class ChatServer {
                 while (true) {
 
                     Socket socket = _serverSocket.accept();
-                    logger.log(Level.INFO, "Accepted new connection: Client " + _clientID);
+                    logger.log(Level.INFO, "Accepted new connection");
                     ClientRecord clientRecord = new ClientRecord(_clientID, socket);
 
-                    int roomNumber = authenticate(clientRecord);
+                    clientRecord = authenticate(clientRecord);
+                    if (clientRecord == null){
+                        return;
+                    }
+
+                    int roomNumber = clientRecord.getRoom();
                     logger.log(Level.INFO, "Connection authenticated");
 
                     if (roomNumber == 1)
@@ -440,7 +468,7 @@ public class ChatServer {
 
             } catch (IOException e) {
 
-               logger.log(Level.SEVERE, "Could not listen on port: " + _port);
+                logger.log(Level.SEVERE, "Could not listen on port: " + _port);
                 System.exit(-1);
 
             } catch (Exception e) {

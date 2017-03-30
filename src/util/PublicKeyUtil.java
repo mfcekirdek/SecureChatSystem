@@ -36,12 +36,13 @@ public class PublicKeyUtil {
 
 
     public static String decrypt(String cipherText, PrivateKey privateKey) throws Exception {
+
         byte[] bytes = Base64.decodeBase64(cipherText);
 
-        Cipher decriptCipher = Cipher.getInstance("RSA");
-        decriptCipher.init(Cipher.DECRYPT_MODE, privateKey);
+        Cipher decryptCipher = Cipher.getInstance("RSA");
+        decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-        return new String(decriptCipher.doFinal(bytes), "UTF-8");
+        return new String(decryptCipher.doFinal(bytes), "UTF-8");
     }
 
     public static KeyPair getKeyPairFromKeyStore(String fileName, String alias, char[] keyStorePw,
@@ -49,7 +50,8 @@ public class PublicKeyUtil {
             UnrecoverableEntryException, KeyStoreException {
 
         InputStream ins;
-        ins = new FileInputStream(new File("448certs/" + fileName));
+        String path = "certificates/" + alias + "/" + fileName;
+        ins = new FileInputStream(new File(path));
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(ins, keyStorePw); // Keystore password
@@ -91,45 +93,11 @@ public class PublicKeyUtil {
         return publicSignature.verify(signatureBytes);
     }
 
-
-    public static void main(String[] args) throws Exception {
-        // First generate a public/private key pair
-
-        // char[] s1 = "s3rv3rstor3s3cr3t".toCharArray();
-        // char[] s2 = "s3rv3rk3ys3cr3t".toCharArray();
-        // String fileName = "serverkeystore.jks";
-        //
-        // KeyPair pair = getKeyPairFromKeyStore(fileName, "serverKey", s1, s2);
-        // System.err.println("PUBLIC KEY : " + pair.getPublic());
-        // System.err.println("PRIVATE KEY : " + pair.getPrivate());
-        //
-        // // Our secret message
-        // String message = "the answer to life the universe and everything";
-        //
-        // // Encrypt the message
-        // String cipherText = encrypt(message, pair.getPublic());
-        //
-        // // Now decrypt it
-        // String decipheredMessage = decrypt(cipherText, pair.getPrivate());
-        //
-        // System.out.println(decipheredMessage);
-        //
-        //
-        // String signature = sign("foobar", pair.getPrivate());
-        //
-        // // Let's check the signature
-        // boolean isCorrect = verify("foobar", signature, pair.getPublic());
-        // System.out.println("Signature correct: " + isCorrect);
-
-        getCertFromFile("ca.cer");
-    }
-
-
-    public static X509Certificate getCertFromFile(String cert) {
+    public static X509Certificate getCertFromFile(String alias, String file) {
         FileInputStream fis;
         X509Certificate caCert = null;
         try {
-            fis = new FileInputStream("448certs/" + cert);
+            fis = new FileInputStream("certificates/" + alias + "/" + file);
             BufferedInputStream bis = new BufferedInputStream(fis);
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
@@ -143,5 +111,4 @@ public class PublicKeyUtil {
 
         return caCert;
     }
-
 }

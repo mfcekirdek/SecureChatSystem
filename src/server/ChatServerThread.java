@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 // socket
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -51,7 +52,7 @@ public class ChatServerThread extends Thread {
             BufferedReader in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
             String receivedMsg;
             Collection<ClientRecord> theClients;
-
+            /* TODO: connection reset exception */
             while ((receivedMsg = in.readLine()) != null) {
 
                 theClients = _records.values();
@@ -74,9 +75,10 @@ public class ChatServerThread extends Thread {
             _socket.shutdownOutput();
             _socket.close();
 
+        } catch (SocketException e) {
+            logger.log(Level.SEVERE, e.getMessage());
         } catch (IOException e) {
-
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage());
         }
 
     }

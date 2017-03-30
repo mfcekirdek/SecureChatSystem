@@ -20,6 +20,7 @@ public class ClientRecord {
     private PublicKey publicKey;
     private byte[] symmetricAESKey;
     private int _room;
+    private String _loginName = "";
 
     public ClientRecord(int clientID, Socket socket) {
         logger.setLevel(Level.INFO);
@@ -81,5 +82,13 @@ public class ClientRecord {
 
     public int getClientID() {
         return _clientID;
+    }
+
+    public void setLoginName(String loginName) {
+        this._loginName = loginName;
+    }
+
+    public String getLoginName() {
+        return _loginName;
     }
 }

@@ -10,14 +10,16 @@ import java.util.logging.Logger;
 public class ChatServerLoginPanel extends JPanel {
 
     private final static Logger logger = Logger.getLogger(ChatServerLoginPanel.class.getName());
-    JPasswordField _privateKeyPassAField;
-    JPasswordField _privateKeyPassBField;
-    JTextField _portField;
-    JTextField _keystoreFileNameAField;
-    JTextField _keystoreFileNameBField;
-    JLabel _errorLabel;
-    JButton _startupButton;
-    ChatServer _cs;
+    private JPasswordField _keystorePass1Field;
+    private JPasswordField _keypairPass1Field;
+    private JPasswordField _keystorePass2Field;
+    private JPasswordField _keypairPass2Field;
+    private JTextField _keystoreFile1Field;
+    private JTextField _keystoreFile2Field;
+    private JTextField _portField;
+    private JLabel _errorLabel;
+    private JButton _startupButton;
+    private ChatServer _cs;
 
     public ChatServerLoginPanel(ChatServer cs) {
 
@@ -40,41 +42,47 @@ public class ChatServerLoginPanel extends JPanel {
         setLayout(gridBag);
 
         addLabel(gridBag, "Chat Server Startup Panel", SwingConstants.CENTER, 1, 0, 2, 1);
-        addLabel(gridBag, "KeyStore A File Name: ", SwingConstants.LEFT, 1, 1, 1, 1);
-        addLabel(gridBag, "KeyStore A Password: ", SwingConstants.LEFT, 1, 2, 1, 1);
-        addLabel(gridBag, "KeyStore B File Name: ", SwingConstants.LEFT, 1, 3, 1, 1);
-        addLabel(gridBag, "KeyStore B Password: ", SwingConstants.LEFT, 1, 4, 1, 1);
-        addLabel(gridBag, "Port Number: ", SwingConstants.LEFT, 1, 5, 1, 1);
+        addLabel(gridBag, "Room1 Keystore File: ", SwingConstants.LEFT, 1, 1, 1, 1);
+        addLabel(gridBag, "Room1 Keystore Password: ", SwingConstants.LEFT, 1, 2, 1, 1);
+        addLabel(gridBag, "Room1 Keypair Password: ", SwingConstants.LEFT, 1, 3, 1, 1);
+        addLabel(gridBag, "Room2 Keystore File: ", SwingConstants.LEFT, 1, 4, 1, 1);
+        addLabel(gridBag, "Room2 Keystore Password: ", SwingConstants.LEFT, 1, 5, 1, 1);
+        addLabel(gridBag, "Room2 Keypair Password: ", SwingConstants.LEFT, 1, 6, 1, 1);
+        addLabel(gridBag, "Port Number: ", SwingConstants.LEFT, 1, 7, 1, 1);
 
 
-        _keystoreFileNameAField = new JTextField();
-        addField(gridBag, _keystoreFileNameAField, 2, 1, 1, 1);
+        _keystoreFile1Field = new JTextField();
+        addField(gridBag, _keystoreFile1Field, 2, 1, 1, 1);
 
-        _privateKeyPassAField = new JPasswordField();
-        _privateKeyPassAField.setEchoChar('*');
-        addField(gridBag, _privateKeyPassAField, 2, 2, 1, 1);
+        _keystorePass1Field = new JPasswordField();
+        _keystorePass1Field.setEchoChar('*');
+        addField(gridBag, _keystorePass1Field, 2, 2, 1, 1);
 
-        _keystoreFileNameBField = new JTextField();
-        addField(gridBag, _keystoreFileNameBField, 2, 3, 1, 1);
+        _keypairPass1Field = new JPasswordField();
+        _keypairPass1Field.setEchoChar('*');
+        addField(gridBag, _keypairPass1Field, 2, 3, 1, 1);
 
-        _privateKeyPassBField = new JPasswordField();
-        _privateKeyPassBField.setEchoChar('*');
-        addField(gridBag, _privateKeyPassBField, 2, 4, 1, 1);
+        _keystoreFile2Field = new JTextField();
+        addField(gridBag, _keystoreFile2Field, 2, 4, 1, 1);
+
+        _keystorePass2Field = new JPasswordField();
+        _keystorePass2Field.setEchoChar('*');
+        addField(gridBag, _keystorePass2Field, 2, 5, 1, 1);
+
+        _keypairPass2Field = new JPasswordField();
+        _keypairPass2Field.setEchoChar('*');
+        addField(gridBag, _keypairPass2Field, 2, 6, 1, 1);
 
         _portField = new JTextField();
-        addField(gridBag, _portField, 2, 5, 1, 1);
+        addField(gridBag, _portField, 2, 7, 1, 1);
 
-        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 6, 2, 1);
+        _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 8, 2, 1);
 
         _errorLabel.setForeground(Color.red);
 
         _startupButton = new JButton("Startup");
-        c.gridx = 1;
-        c.gridy = 8;
-        c.gridwidth = 2;
-        c.insets = new Insets(10, 10, 20, 10);
-        gridBag.setConstraints(_startupButton, c);
-        add(_startupButton);
+        addButton(gridBag, _startupButton, 1, 9, 2, 1);
+
 
         setFieldsDefaults();
 
@@ -82,22 +90,38 @@ public class ChatServerLoginPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
 
                 int status = startup();
-                if(status == ChatServer.SUCCESS)
+                if (status == ChatServer.SUCCESS)
                     _cs._layout.show(_cs._app.getContentPane(), "Clients");
             }
         });
     }
 
     private void setFieldsDefaults() {
-        _keystoreFileNameAField.setText("server1keystore.jks");
-        _keystoreFileNameBField.setText("server2keystore.jks");
-        _privateKeyPassAField.setText("s3rv3r1");
-        _privateKeyPassBField.setText("s3rv3r2");
+        _keystoreFile1Field.setText("room1keystore.jks");
+        _keystorePass1Field.setText("room1keystore");
+        _keypairPass1Field.setText("room1keypair");
+        _keystoreFile2Field.setText("room2keystore.jks");
+        _keystorePass2Field.setText("room2keystore");
+        _keypairPass2Field.setText("room2keypair");
         _portField.setText("7777");
     }
 
-    JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
-                    int x, int y, int width, int height) {
+    private void addButton(GridBagLayout gridBag, JButton button, int x, int y, int width, int height) {
+
+        GridBagConstraints c = new GridBagConstraints();
+
+        c.gridx = x;
+        c.gridy = y;
+        c.gridwidth = width;
+        c.gridheight = height;
+        c.insets = new Insets(10, 10, 20, 10);
+        gridBag.setConstraints(_startupButton, c);
+        add(_startupButton);
+
+    }
+
+    private JLabel addLabel(GridBagLayout gridBag, String labelStr, int align,
+                            int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
         JLabel label = new JLabel(labelStr);
         if (align == SwingConstants.LEFT) {
@@ -133,16 +157,21 @@ public class ChatServerLoginPanel extends JPanel {
     private int startup() {
         int _asPort;
 
-        String _keystoreFileNameA = _keystoreFileNameAField.getText();
-        char[] _privateKeyPassA = _privateKeyPassAField.getPassword();
-        String _keystoreFileNameB = _keystoreFileNameBField.getText();
-        char[] _privateKeyPassB = _privateKeyPassBField.getPassword();
+        String _keystoreFile1 = _keystoreFile1Field.getText();
+        char[] _keystorePwd1 = _keystorePass1Field.getPassword();
+        char[] _keypairPwd1 = _keypairPass1Field.getPassword();
+
+        String _keystoreFile2 = _keystoreFile2Field.getText();
+        char[] _keystorePwd2 = _keystorePass2Field.getPassword();
+        char[] _keypairPwd2 = _keypairPass2Field.getPassword();
 
         if (_portField.getText().equals("")
-                || _privateKeyPassA.length == 0
-                || _keystoreFileNameA.equals("")
-                || _privateKeyPassB.length == 0
-                || _keystoreFileNameB.equals("")) {
+                || _keystoreFile1.equals("")
+                || _keystorePwd1.length == 0
+                || _keypairPwd1.length == 0
+                || _keystoreFile2.equals("")
+                || _keystorePwd2.length == 0
+                || _keypairPwd2.length == 0) {
 
             _errorLabel.setText("Missing required field.");
 
@@ -163,7 +192,8 @@ public class ChatServerLoginPanel extends JPanel {
             return ChatServer.ERROR;
         }
 
-        int[] status = _cs.startup(_keystoreFileNameA, _privateKeyPassA, _keystoreFileNameB, _privateKeyPassB, _asPort).clone();
+        int[] status = _cs.startup(_keystoreFile1, _keystorePwd1, _keypairPwd1,
+                _keystoreFile2, _keystorePwd2, _keypairPwd2, _asPort).clone();
 
         if (status[0] == ChatServer.SUCCESS && status[1] == ChatServer.SUCCESS) {
             // success
@@ -182,12 +212,4 @@ public class ChatServerLoginPanel extends JPanel {
         return ChatServer.ERROR;
     }
 
-    public static void main(String[] args) {
-        JFrame app = new JFrame();
-        ChatServerLoginPanel login = new ChatServerLoginPanel(null);
-        app.getContentPane().add(login);
-        app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        app.pack();
-        app.show();
-    }
 }

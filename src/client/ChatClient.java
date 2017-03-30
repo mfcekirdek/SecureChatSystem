@@ -166,9 +166,9 @@ public class ChatClient {
 
                     _in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
 
-                    X509Certificate caCert = PublicKeyUtil.getCertFromFile("ca.cer");
+                    X509Certificate caCert = PublicKeyUtil.getCertFromFile("CA", "CA.cer");
 
-                    _out.println("Hello#" + selectedRoomNumber);
+                    _out.println("Hello#" + _loginName + "#" + selectedRoomNumber);
 
                     ObjectInputStream ois = new ObjectInputStream(_socket.getInputStream());
                     ObjectOutputStream oos = new ObjectOutputStream(_socket.getOutputStream());
@@ -183,7 +183,7 @@ public class ChatClient {
                         System.exit(0);
                     }
 
-                    clientCert = PublicKeyUtil.getCertFromFile(_loginName + "_CA_.cer");
+                    clientCert = PublicKeyUtil.getCertFromFile(_loginName,_loginName + ".cer");
                     oos.writeObject(clientCert);
 
                     String isVerified;
@@ -259,7 +259,13 @@ public class ChatClient {
 
                     return result;
 
-                } catch (UnknownHostException e) {
+                } catch(EOFException e) {
+                    logger.log(Level.SEVERE, "Possible duplicate login name");
+                    JOptionPane.showMessageDialog(_app, "There is a connected user with the same login name in room",
+                            "Multiple Login Attempt", JOptionPane.ERROR_MESSAGE);
+                    System.exit(1);
+                }
+                catch (UnknownHostException e) {
 
                     logger.log(Level.SEVERE, "Don't know about the serverHost: " + serverHost);
                     System.exit(1);
@@ -289,19 +295,13 @@ public class ChatClient {
                 logger.log(Level.SEVERE, "Cannot read client key pair");
             }
 
-        } catch (NoSuchAlgorithmException e) {
-            result = ERROR;
-        } catch (CertificateException e) {
-            result = ERROR;
-        } catch (UnrecoverableEntryException e) {
-            result = ERROR;
-        } catch (KeyStoreException e) {
+        } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableEntryException | CertificateException e) {
             result = ERROR;
         } catch (IOException e) {
-            logger.log(Level.SEVERE, e.getMessage());
             result = ERROR;
             if (e instanceof FileNotFoundException) {
                 result = ERROR;
+                logger.log(Level.SEVERE, "Keystore file is not found.");
             }
         }
 
@@ -329,7 +329,6 @@ public class ChatClient {
             logger.log(Level.CONFIG, "Sent message");
         } catch (Exception e) {
             logger.log(Level.SEVERE, e.getMessage());
-            //e.printStackTrace();
         }
 
     }
