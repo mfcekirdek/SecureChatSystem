@@ -102,16 +102,7 @@ public class ChatLoginPanel extends JPanel {
 
         _errorLabel = addLabel(gridBag, " ", SwingConstants.CENTER, 1, 10, 2, 1);
 
-        // just for testing purpose
-
-        _loginNameField.setText("MFC");
-        _passwordField.setText("mfck3y");
-        _keyStoreNameField.setText("mfckeystore.jks");
-        _keyStorePasswordField.setText("mfck3ystor3");
-        _caHostField.setText("localhost");
-        _caPortField.setText("6666");
-        _serverHostField.setText("localhost");
-        _serverPortField.setText("7777");
+        setFieldsDefaults();
 
         _errorLabel.setForeground(Color.red);
 
@@ -172,6 +163,18 @@ public class ChatLoginPanel extends JPanel {
         ComboBoxModel<Integer> model = new DefaultComboBoxModel<Integer>(new Integer[]{1, 2});
         field.setModel(model);
         add(field);
+    }
+
+    private void setFieldsDefaults() {
+
+        _loginNameField.setText("");
+        _passwordField.setText("");
+        _keyStoreNameField.setText("");
+        _keyStorePasswordField.setText("");
+        _caHostField.setText("localhost");
+        _caPortField.setText("6666");
+        _serverHostField.setText("localhost");
+        _serverPortField.setText("7777");
     }
 
     private void connect() {
