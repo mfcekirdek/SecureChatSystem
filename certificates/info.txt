@@ -1,0 +1,36 @@
+CA:
+	Alias:  CA
+	Keystore File:  cakeystore.jks
+	Keystore Pwd:   cakeystore
+	Key Pair Pwd:   cakeypair
+
+Chat Room 1:
+	Alias:  Room1
+	Keystore File:  room1.jks
+	Keystore Pwd:   room1keystore
+	Key Pair Pwd:   room1keypair
+
+Chat Room 2:
+	Alias:  Room2
+	Keystore File:  room2.jks
+	Keystore Pwd:   room2keystore
+	Key Pair Pwd:   room2keypair
+	
+Client-1:
+	Alias:  Client1
+	Keystore File:  client1keystore.jks
+	Keystore Pwd:   client1keystore
+	Key Pair Pwd:   client1keypair
+	
+Client-2:
+	Alias:  Client2
+	Keystore File:  client2keystore.jks
+	Keystore Pwd:   client2keystore
+	Key Pair Pwd:   client2keypair
+
+Client-3:
+	Alias:  Client3
+	Keystore File:  client3keystore.jks
+	Keystore Pwd:   client3keystore
+	Key Pair Pwd:   client3keypair
+	
