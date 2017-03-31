@@ -53,6 +53,8 @@ public class ChatServerThread extends Thread {
             String receivedMsg;
             Collection<ClientRecord> theClients;
             /* TODO: connection reset exception */
+            
+            // publish the new received message to all clients
             while ((receivedMsg = in.readLine()) != null) {
 
                 theClients = _records.values();
@@ -63,7 +65,6 @@ public class ChatServerThread extends Thread {
 
                     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                     out.println(receivedMsg);
-
                 }
             }
 

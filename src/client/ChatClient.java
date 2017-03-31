@@ -7,27 +7,42 @@
 // Chat Client starter application.
 package client;
 
-import org.apache.commons.codec.binary.Base64;
-import server.ChatServer;
-import util.DH;
-import util.PublicKeyUtil;
-import util.SymmetricKeyUtil;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.CardLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.EOFException;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.security.*;
+import java.security.AccessControlException;
+import java.security.KeyPair;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.UnrecoverableEntryException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+
+import org.apache.commons.codec.binary.Base64;
+
+import util.DH;
+import util.PublicKeyUtil;
+import util.SymmetricKeyUtil;
 
 public class ChatClient {
 

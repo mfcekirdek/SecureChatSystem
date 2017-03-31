@@ -1,11 +1,16 @@
 package server;
 
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.border.TitledBorder;
 
 public class ChatServerConnectedClientsPanel extends JPanel {
 

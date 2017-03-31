@@ -24,7 +24,17 @@ import javax.crypto.Cipher;
 
 
 public class PublicKeyUtil {
-
+  
+  
+    /**
+     * RSA encryption
+     * Encrypt with RSA public key
+     * 
+     * @param plainText
+     * @param publicKey
+     * @return
+     * @throws Exception
+     */
     public static String encrypt(String plainText, PublicKey publicKey) throws Exception {
         Cipher encryptCipher = Cipher.getInstance("RSA");
         encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
@@ -35,6 +45,14 @@ public class PublicKeyUtil {
     }
 
 
+    /**
+     * RSA decryption
+     * Decrypt with RSA private key
+     * @param cipherText
+     * @param privateKey
+     * @return
+     * @throws Exception
+     */
     public static String decrypt(String cipherText, PrivateKey privateKey) throws Exception {
 
         byte[] bytes = Base64.decodeBase64(cipherText);
@@ -44,7 +62,21 @@ public class PublicKeyUtil {
 
         return new String(decryptCipher.doFinal(bytes), "UTF-8");
     }
-
+    
+    /**
+     * Read keypair from keystore
+     * 
+     * @param fileName
+     * @param alias
+     * @param keyStorePw
+     * @param keyPw
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws CertificateException
+     * @throws IOException
+     * @throws UnrecoverableEntryException
+     * @throws KeyStoreException
+     */
     public static KeyPair getKeyPairFromKeyStore(String fileName, String alias, char[] keyStorePw,
                                                  char[] keyPw) throws NoSuchAlgorithmException, CertificateException, IOException,
             UnrecoverableEntryException, KeyStoreException {
@@ -71,6 +103,15 @@ public class PublicKeyUtil {
 
         return new KeyPair(publicKey, privateKey);
     }
+    
+    /**
+     * Sign with RSA private key
+     * 
+     * @param plainText
+     * @param privateKey
+     * @return
+     * @throws Exception
+     */
 
     public static String sign(String plainText, PrivateKey privateKey) throws Exception {
         Signature privateSignature = Signature.getInstance("SHA256withRSA");
@@ -81,7 +122,16 @@ public class PublicKeyUtil {
 
         return Base64.encodeBase64String(signature);
     }
-
+    
+    /**
+     * Verify a sign with RSA public key
+     * 
+     * @param plainText
+     * @param signature
+     * @param publicKey
+     * @return
+     * @throws Exception
+     */
     public static boolean verify(String plainText, String signature, PublicKey publicKey)
             throws Exception {
         Signature publicSignature = Signature.getInstance("SHA256withRSA");
@@ -92,7 +142,13 @@ public class PublicKeyUtil {
 
         return publicSignature.verify(signatureBytes);
     }
-
+    
+    /**
+     * Get certificate from file
+     * @param alias
+     * @param file
+     * @return
+     */
     public static X509Certificate getCertFromFile(String alias, String file) {
         FileInputStream fis;
         X509Certificate caCert = null;

@@ -1,7 +1,8 @@
 package util;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.DigestUtils;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -9,13 +10,19 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public class SymmetricKeyUtil {
-
+  
+  
+    /**
+     * Calculate MD5 HMAC of given string
+     * @param key
+     * @param input
+     * @return
+     */
     public static String getHMACMD5(byte[] key, String input) {
 
         SecretKeySpec keySpec = new SecretKeySpec(key, "HmacMD5");
@@ -37,6 +44,16 @@ public class SymmetricKeyUtil {
         return hmac;
 
     }
+    
+    /**
+     * AES Block encryption with Counter Mode
+     * Encrypts the given value with 128 bit AES Key 
+     * 
+     * @param key
+     * @param initVector
+     * @param value
+     * @return
+     */
 
     public static byte[] encrypt(byte[] key, byte[] initVector, byte[] value) {
         try {
@@ -56,6 +73,14 @@ public class SymmetricKeyUtil {
         return null;
     }
 
+    /**
+     * AES Block decryption with Counter Mode
+     * Decrypts the given encrypted value with 128 bit AES Key 
+     * @param key
+     * @param initVector
+     * @param encrypted
+     * @return
+     */
     public static byte[] decrypt(byte[] key, byte[] initVector, byte[] encrypted) {
         try {
             IvParameterSpec iv = new IvParameterSpec(initVector);
@@ -75,35 +100,19 @@ public class SymmetricKeyUtil {
         return null;
     }
 
-    public static void main(String[] args) {
-
-        try {
-
-            byte[] key = generateSymmetricAESKey();
-            byte[] iv = generate16BytesIV();
-            String hash = null;
-            hash = generateMD5Hash(new String(key, "UTF-8")).substring(0, 16);
-            System.out.println("hash.substring(0,16) = " + hash.substring(0, 16));
-
-            String input = "ASDF";
-            String kStr = new String(key, "UTF-8");
-
-            byte[] k = hash.getBytes();
-
-            byte[] cipher = encrypt(k, iv, kStr.getBytes());
-            byte[] plain = decrypt(k, iv, cipher);
-
-            System.out.println(new String(plain, "UTF-8"));
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * Calculates MD5 Hash of given string
+     * @param msg
+     * @return
+     */
     public static String generateMD5Hash(String msg) {
         return DigestUtils.md5Hex(msg);
     }
 
+    /**
+     * Generates 128 bit symmetric AES Key
+     * @return
+     */
     public static byte[] generateSymmetricAESKey() {
 
         KeyGenerator keyGen;
@@ -120,6 +129,10 @@ public class SymmetricKeyUtil {
 
     }
 
+    /**
+     * Generates initialization vector
+     * @return
+     */
     public static byte[] generate16BytesIV() {
 
         final int AES_KEYLENGTH = 128;
